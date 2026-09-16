@@ -157,30 +157,11 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   text-transform: uppercase; letter-spacing: 0.3px;
 }
 
-/* Stati scommessa */
-.bet-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
-.status-open          { background: #dcfce7; color: #15803d; }
-.status-expired       { background: #fef3c7; color: #b45309; }
-.status-closed        { background: #dbeafe; color: #1d4ed8; }
-.status-resolved-yes  { background: #dcfce7; color: #15803d; }
-.status-resolved-no   { background: #fee2e2; color: #b91c1c; }
-.status-cancelled     { background: #f1f5f9; color: #94a3b8; }
-
-.bet-card { border-left: 4px solid var(--border); }
-.bet-card[data-status="open"]         { border-left-color: var(--yes); }
-.bet-card[data-status="expired"]      { border-left-color: #f59e0b; }
-.bet-card[data-status="closed"]       { border-left-color: var(--accent); }
-.bet-card[data-status="resolved-yes"] { border-left-color: var(--yes); }
-.bet-card[data-status="resolved-no"]  { border-left-color: var(--no); }
-.bet-card[data-status="cancelled"]    { border-left-color: #cbd5e1; opacity: 0.9; }
-
-.bet-detail { border-left: 4px solid var(--border); }
-.bet-detail[data-status="open"]         { border-left-color: var(--yes); }
-.bet-detail[data-status="expired"]      { border-left-color: #f59e0b; }
-.bet-detail[data-status="closed"]       { border-left-color: var(--accent); }
-.bet-detail[data-status="resolved-yes"] { border-left-color: var(--yes); }
-.bet-detail[data-status="resolved-no"]  { border-left-color: var(--no); }
-.bet-detail[data-status="cancelled"]    { border-left-color: #cbd5e1; opacity: 0.9; }
+/* Stati scommessa (versione precedente) */
+.bet-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
+.status-open { background: var(--yes-bg); color: var(--yes); }
+.status-closed, .status-resolved, .status-cancelled { background: #f1f5f9; color: var(--text-muted); }
+.status-expired { background: #fef3c7; color: #b45309; }
 
 .bet-title { font-size: 15px; font-weight: 600; margin: 0 0 12px; line-height: 1.35; }
 
@@ -350,7 +331,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 .admin-row:last-child { border-bottom: none; }
 .admin-row .grow { flex: 1; min-width: 0; }
 .admin-row .name { font-weight: 600; }
-.admin-row .meta { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.admin-row .meta { font-size: 11px; color: var(--text-muted); }
 .admin-row .actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
 .profile-head {
@@ -455,19 +436,12 @@ function timeAgo(d) {
   if (diff < 604800) return Math.floor(diff/86400) + 'g fa';
   return new Date(d).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
 }
-function statusInfo(bet, closed) {
-  if (bet.status === 'resolved') {
-    return bet.outcome === 'yes'
-      ? { key: 'resolved-yes', label: 'RISOLTA · SI' }
-      : { key: 'resolved-no',  label: 'RISOLTA · NO' };
-  }
-  if (bet.status === 'cancelled') return { key: 'cancelled', label: 'ANNULLATA' };
-  if (bet.status === 'closed')    return { key: 'closed',    label: 'CHIUSA' };
-  if (closed)                     return { key: 'expired',   label: 'SCADUTA' };
-  return                                 { key: 'open',      label: 'APERTA' };
-}
 function statusLabel(bet, closed) {
-  return statusInfo(bet, closed).label;
+  if (bet.status === 'resolved') return bet.outcome === 'yes' ? 'RISOLTA · SI' : 'RISOLTA · NO';
+  if (bet.status === 'cancelled') return 'ANNULLATA';
+  if (bet.status === 'closed') return 'CHIUSA';
+  if (closed) return 'SCADUTA';
+  return 'APERTA';
 }
 function toLocalInputValue(date) {
   const d = new Date(date);
@@ -838,12 +812,12 @@ function betCardHTML(b) {
   const yPct = pct(yes, no);
   const nPct = 100 - yPct;
   const closed = new Date(b.deadline) < new Date();
-  const st = statusInfo(b, closed);
+  const statusCls = b.status === 'open' && closed ? 'status-expired' : 'status-' + b.status;
   return `
-    <div class="bet-card" data-id="${b.id}" data-status="${st.key}">
+    <div class="bet-card" data-id="${b.id}">
       <div class="bet-card-head">
         <span class="bet-cat">${escapeHTML(b.category?.name || 'Senza categoria')}</span>
-        <span class="bet-status status-${st.key}">${st.label}</span>
+        <span class="bet-status ${statusCls}">${statusLabel(b, closed)}</span>
       </div>
       <h3 class="bet-title">${escapeHTML(b.title)}</h3>
       <div class="pool-bar">
@@ -906,13 +880,13 @@ async function renderBet(id) {
     const myNo  = positions.filter(p => p.user_id === me?.id && p.side === 'no').reduce((s,p)=>s+Number(p.stake),0);
     const iBetYes = myYes > 0;
     const iBetNo  = myNo > 0;
-    const st = statusInfo(bet, closed);
+    const statusCls = bet.status === 'open' && closed ? 'status-expired' : 'status-' + bet.status;
 
     app.innerHTML = `
-      <div class="bet-detail" data-status="${st.key}">
+      <div class="bet-detail">
         <div class="bet-card-head">
           <span class="bet-cat">${escapeHTML(bet.category?.name || 'Senza categoria')}</span>
-          <span class="bet-status status-${st.key}">${st.label}</span>
+          <span class="bet-status ${statusCls}">${statusLabel(bet, closed)}</span>
         </div>
         <h1>${escapeHTML(bet.title)}</h1>
         ${bet.description ? `<div class="bet-desc">${escapeHTML(bet.description)}</div>` : ''}
@@ -1287,14 +1261,13 @@ async function renderProfile(username) {
   }
   function betRow(b) {
     const closed = new Date(b.deadline) < new Date();
-    const st = statusInfo(b, closed);
     return `
       <div class="pos-item" data-bet="${b.id}" style="cursor:pointer">
         <span class="side-tag" style="background:var(--accent-bg);color:var(--accent);width:auto;padding:3px 8px">${escapeHTML(b.category?.name || '—')}</span>
         <div class="username" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
           ${escapeHTML(b.title)}
         </div>
-        <span class="bet-status status-${st.key}" style="font-size:10px;padding:2px 6px">${st.label}</span>
+        <span class="stake" style="font-weight:500;color:var(--text-muted);font-size:11px">${statusLabel(b, closed)}</span>
       </div>
     `;
   }
@@ -1470,17 +1443,15 @@ async function renderAdminBets() {
     const closed = new Date(b.deadline) < new Date();
     const yes = Number(b.yes_pool)||0, no = Number(b.no_pool)||0;
     const yPct = pct(yes, no);
-    const st = statusInfo(b, closed);
+    const statusCls = b.status === 'open' && closed ? 'status-expired' : 'status-' + b.status;
     const canAct = b.status === 'open' || b.status === 'closed';
     return `
-      <div class="admin-row" data-status="${st.key}" style="flex-wrap:wrap">
+      <div class="admin-row" style="flex-wrap:wrap">
         <div class="grow">
           <div class="name"><a href="#/bet/${b.id}">${escapeHTML(b.title)}</a></div>
           <div class="meta">
-            <span>${escapeHTML(b.category?.name || '—')}</span>
-            <span>· SI ${yPct}% / NO ${100-yPct}%</span>
-            <span>· ${fmt(yes+no)}cr</span>
-            <span class="bet-status status-${st.key}" style="font-size:10px;padding:2px 6px">${st.label}</span>
+            ${escapeHTML(b.category?.name || '—')} · SI ${yPct}% / NO ${100-yPct}%
+            · ${fmt(yes+no)}cr · ${statusLabel(b, closed)}
           </div>
         </div>
         <div class="actions">
@@ -1490,7 +1461,6 @@ async function renderAdminBets() {
             <button class="btn-no btn-sm" data-action="resolve-no" data-id="${b.id}">NO</button>
             <button class="btn-secondary btn-sm" data-action="cancel" data-id="${b.id}">Annulla</button>
           ` : ''}
-          <button class="btn-secondary btn-sm" data-action="delete" data-id="${b.id}" style="color:var(--no);border-color:#fecaca">Elimina</button>
         </div>
       </div>
     `;
@@ -1516,20 +1486,6 @@ async function handleAdminBetAction(action, id) {
     const { error } = await sb.rpc('resolve_bet', { p_bet_id: id, p_outcome: outcome });
     if (error) return toast(error.message, 'error');
     toast('Scommessa risolta', 'success');
-  }
-  if (action === 'delete') {
-    const { data: b } = await sb.from('bets').select('status, title').eq('id', id).maybeSingle();
-    if (!b) return toast('Scommessa non trovata', 'error');
-    let msg = `Eliminare definitivamente "${b.title}"?\n\n`;
-    if (b.status === 'open' || b.status === 'closed') {
-      msg += 'Tutte le puntate verranno RIMBORSATE al 100% e la scommessa eliminata. Operazione irreversibile.';
-    } else {
-      msg += 'La scommessa e tutti i suoi commenti/puntate verranno rimossi. I saldi NON verranno modificati (risoluzione/rimborso già avvenuti). Operazione irreversibile.';
-    }
-    if (!confirm(msg)) return;
-    const { error } = await sb.rpc('admin_delete_bet', { p_bet_id: id });
-    if (error) return toast(error.message, 'error');
-    toast('Scommessa eliminata', 'success');
   }
 }
 
@@ -1620,10 +1576,6 @@ async function renderAdminCats() {
   const { data, error } = await sb.from('categories').select('*').order('sort_order');
   if (error) { body.innerHTML = `<div class="error-box">${escapeHTML(error.message)}</div>`; return; }
 
-  const { data: counts } = await sb.from('bets').select('category_id');
-  const countMap = {};
-  (counts || []).forEach(b => { countMap[b.category_id] = (countMap[b.category_id] || 0) + 1; });
-
   body.innerHTML = `
     <div class="section">
       <h2>Categorie (${data.length})</h2>
@@ -1635,18 +1587,10 @@ async function renderAdminCats() {
     </div>
   `;
 
-  body.querySelectorAll('[data-rename-cat]').forEach(btn => {
-    btn.onclick = () => openRenameCatModal(btn.dataset.renameCat, btn.dataset.name);
-  });
   body.querySelectorAll('[data-del-cat]').forEach(btn => {
     btn.onclick = async () => {
-      const id = Number(btn.dataset.delCat);
-      const n = countMap[id] || 0;
-      const warn = n > 0
-        ? `Questa categoria è usata da ${n} scommess${n === 1 ? 'a' : 'e'}. Diventeranno "Senza categoria". Continuare?`
-        : 'Eliminare la categoria?';
-      if (!confirm(warn)) return;
-      const { error } = await sb.from('categories').delete().eq('id', id);
+      if (!confirm('Eliminare la categoria? Le scommesse diventeranno senza categoria.')) return;
+      const { error } = await sb.from('categories').delete().eq('id', btn.dataset.delCat);
       if (error) return toast(error.message, 'error');
       toast('Eliminata', 'success');
     };
@@ -1665,49 +1609,17 @@ async function renderAdminCats() {
   };
 
   function catRow(c) {
-    const n = countMap[c.id] || 0;
     return `
       <div class="admin-row">
         <div class="grow">
           <div class="name">${escapeHTML(c.name)}</div>
-          <div class="meta">slug: ${escapeHTML(c.slug)} · ${n} scommess${n === 1 ? 'a' : 'e'}</div>
+          <div class="meta">slug: ${escapeHTML(c.slug)}</div>
         </div>
         <div class="actions">
-          <button class="btn-secondary btn-sm" data-rename-cat="${c.id}" data-name="${escapeHTML(c.name)}">Rinomina</button>
-          <button class="btn-secondary btn-sm" data-del-cat="${c.id}" style="color:var(--no);border-color:#fecaca">Elimina</button>
+          <button class="btn-secondary btn-sm" data-del-cat="${c.id}">Elimina</button>
         </div>
       </div>
     `;
-  }
-
-  function openRenameCatModal(id, currentName) {
-    openModal({
-      title: 'Rinomina categoria',
-      bodyHTML: `
-        <form id="renameForm">
-          <div class="field">
-            <label>Nuovo nome</label>
-            <input type="text" name="name" required maxlength="40" value="${escapeHTML(currentName)}">
-          </div>
-          <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">
-            Lo slug verrà rigenerato automaticamente dal nome.
-          </p>
-          <button type="submit" class="btn-primary" style="width:100%">Salva</button>
-        </form>
-      `,
-      onMount: (root, close) => {
-        const form = root.querySelector('#renameForm');
-        form.onsubmit = async (e) => {
-          e.preventDefault();
-          const name = form.name.value.trim();
-          if (!name) return;
-          const { error } = await sb.rpc('admin_rename_category', { p_id: id, p_name: name });
-          if (error) return toast(error.message, 'error');
-          toast('Categoria rinominata', 'success');
-          close();
-        };
-      }
-    });
   }
 }
 
