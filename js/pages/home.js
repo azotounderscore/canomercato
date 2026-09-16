@@ -60,8 +60,6 @@ async function loadBets() {
   });
 }
 
-import { escapeHTML, fmt, pct, deadlineLabel, statusInfo } from '../utils.js';
-
 function betCard(b) {
   const yes = Number(b.yes_pool) || 0;
   const no = Number(b.no_pool) || 0;
