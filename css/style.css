@@ -156,10 +156,32 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   background: var(--accent-bg); padding: 3px 8px; border-radius: 999px;
   text-transform: uppercase; letter-spacing: 0.3px;
 }
-.bet-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
-.status-open { background: var(--yes-bg); color: var(--yes); }
-.status-closed, .status-resolved, .status-cancelled { background: #f1f5f9; color: var(--text-muted); }
-.status-expired { background: #fef3c7; color: #b45309; }
+/* Stati scommessa */
+.bet-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+.status-open          { background: #dcfce7; color: #15803d; }   /* verde: aperta */
+.status-expired       { background: #fef3c7; color: #b45309; }   /* ambra: scaduta ma non chiusa */
+.status-closed        { background: #dbeafe; color: #1d4ed8; }   /* blu: chiusa, in attesa esito */
+.status-resolved-yes  { background: #dcfce7; color: #15803d; }
+.status-resolved-no   { background: #fee2e2; color: #b91c1c; }
+.status-cancelled     { background: #f1f5f9; color: #94a3b8; }
+
+/* Bordo sinistro colorato sulle card per rinforzare lo stato */
+.bet-card { border-left: 4px solid var(--border); }
+.bet-card[data-status="open"]         { border-left-color: var(--yes); }
+.bet-card[data-status="expired"]      { border-left-color: #f59e0b; }
+.bet-card[data-status="closed"]       { border-left-color: var(--accent); }
+.bet-card[data-status="resolved-yes"] { border-left-color: var(--yes); }
+.bet-card[data-status="resolved-no"]  { border-left-color: var(--no); }
+.bet-card[data-status="cancelled"]    { border-left-color: #cbd5e1; opacity: 0.9; }
+
+/* Stessa cosa per i box di dettaglio */
+.bet-detail { border-left: 4px solid var(--border); }
+.bet-detail[data-status="open"]         { border-left-color: var(--yes); }
+.bet-detail[data-status="expired"]      { border-left-color: #f59e0b; }
+.bet-detail[data-status="closed"]       { border-left-color: var(--accent); }
+.bet-detail[data-status="resolved-yes"] { border-left-color: var(--yes); }
+.bet-detail[data-status="resolved-no"]  { border-left-color: var(--no); }
+.bet-detail[data-status="cancelled"]    { border-left-color: #cbd5e1; opacity: 0.9; }
 .bet-title { font-size: 15px; font-weight: 600; margin: 0 0 12px; line-height: 1.35; }
 
 .pool-bar {
