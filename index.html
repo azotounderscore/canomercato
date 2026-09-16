@@ -5,7 +5,373 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>NomentanoMarket</title>
-<link rel="stylesheet" href="css/style.css">
+<style>
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --border-2: #f1f5f9;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --yes: #16a34a;
+  --yes-bg: #dcfce7;
+  --no: #dc2626;
+  --no-bg: #fee2e2;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+input, textarea, select { font-family: inherit; font-size: 14px; }
+
+#topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+.brand {
+  font-weight: 700; font-size: 15px;
+  color: var(--text); letter-spacing: -0.3px;
+  flex-shrink: 0;
+}
+.top-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.search-input {
+  flex: 1; min-width: 0;
+  padding: 8px 12px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--bg); outline: none;
+  font-size: 14px;
+}
+.search-input:focus { border-color: var(--accent); background: #fff; }
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 14px; flex-shrink: 0;
+}
+.icon-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: transparent; border: 1px solid var(--border);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 15px;
+}
+.icon-btn:hover { background: var(--bg); }
+.btn-login {
+  padding: 7px 14px; border-radius: 10px;
+  background: var(--text); color: #fff; font-weight: 600; font-size: 13px;
+}
+
+#app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 12px 100px;
+}
+
+#bottomnav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #fff; border-top: 1px solid var(--border);
+  display: flex; z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+#bottomnav a {
+  flex: 1; text-align: center; padding: 8px 4px 10px;
+  color: var(--text-dim); font-size: 10px; font-weight: 500;
+  display: flex; flex-direction: column; gap: 2px; align-items: center;
+}
+#bottomnav a.active { color: var(--accent); }
+#bottomnav svg { width: 22px; height: 22px; }
+
+@media (min-width: 768px) {
+  #bottomnav { display: none; }
+  #app { padding-bottom: 32px; }
+}
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.page-header h1 {
+  font-size: 20px; margin: 0; letter-spacing: -0.3px;
+}
+
+.btn-primary {
+  display: inline-block; padding: 9px 16px; border-radius: 10px;
+  background: var(--text); color: #fff; border: none;
+  font-weight: 600; font-size: 13px;
+}
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary {
+  display: inline-block; padding: 9px 16px; border-radius: 10px;
+  background: #fff; color: var(--text); border: 1px solid var(--border);
+  font-weight: 600; font-size: 13px;
+}
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-danger { background: var(--no); }
+.btn-yes { background: var(--yes); color: #fff; border: none; }
+.btn-no { background: var(--no); color: #fff; border: none; }
+
+.cat-bar {
+  display: flex; gap: 6px; overflow-x: auto;
+  margin: 0 -12px 14px; padding: 0 12px 4px;
+  scrollbar-width: none;
+}
+.cat-bar::-webkit-scrollbar { display: none; }
+.chip {
+  flex-shrink: 0; padding: 6px 12px; border-radius: 999px;
+  background: #fff; border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 12px; font-weight: 500;
+}
+.chip.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+.bets-list { display: flex; flex-direction: column; gap: 10px; }
+.bet-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px; cursor: pointer;
+  transition: border-color 0.15s;
+}
+.bet-card:hover { border-color: #cbd5e1; }
+.bet-card-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.bet-cat {
+  font-size: 11px; font-weight: 600; color: var(--accent);
+  background: var(--accent-bg); padding: 3px 8px; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+/* Stati scommessa */
+.bet-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+.status-open          { background: #dcfce7; color: #15803d; }
+.status-expired       { background: #fef3c7; color: #b45309; }
+.status-closed        { background: #dbeafe; color: #1d4ed8; }
+.status-resolved-yes  { background: #dcfce7; color: #15803d; }
+.status-resolved-no   { background: #fee2e2; color: #b91c1c; }
+.status-cancelled     { background: #f1f5f9; color: #94a3b8; }
+
+.bet-card { border-left: 4px solid var(--border); }
+.bet-card[data-status="open"]         { border-left-color: var(--yes); }
+.bet-card[data-status="expired"]      { border-left-color: #f59e0b; }
+.bet-card[data-status="closed"]       { border-left-color: var(--accent); }
+.bet-card[data-status="resolved-yes"] { border-left-color: var(--yes); }
+.bet-card[data-status="resolved-no"]  { border-left-color: var(--no); }
+.bet-card[data-status="cancelled"]    { border-left-color: #cbd5e1; opacity: 0.9; }
+
+.bet-detail { border-left: 4px solid var(--border); }
+.bet-detail[data-status="open"]         { border-left-color: var(--yes); }
+.bet-detail[data-status="expired"]      { border-left-color: #f59e0b; }
+.bet-detail[data-status="closed"]       { border-left-color: var(--accent); }
+.bet-detail[data-status="resolved-yes"] { border-left-color: var(--yes); }
+.bet-detail[data-status="resolved-no"]  { border-left-color: var(--no); }
+.bet-detail[data-status="cancelled"]    { border-left-color: #cbd5e1; opacity: 0.9; }
+
+.bet-title { font-size: 15px; font-weight: 600; margin: 0 0 12px; line-height: 1.35; }
+
+.pool-bar {
+  display: flex; height: 8px; border-radius: 999px; overflow: hidden;
+  background: var(--border-2); margin-bottom: 8px;
+}
+.pool-yes { background: var(--yes); transition: width 0.4s; }
+.pool-no { background: var(--no); transition: width 0.4s; }
+.pool-row {
+  display: flex; justify-content: space-between; font-size: 12px;
+  font-weight: 600;
+}
+.pool-yes-label { color: var(--yes); }
+.pool-no-label { color: var(--no); }
+.bet-card-foot {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--text-muted); margin-top: 8px;
+}
+
+.bet-detail {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+}
+.bet-detail h1 { font-size: 18px; margin: 6px 0 8px; line-height: 1.3; }
+.bet-desc { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; }
+
+.outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+.outcome-btn {
+  border-radius: 12px; padding: 14px 10px; text-align: center;
+  border: 1px solid var(--border); background: #fff; font-weight: 600;
+}
+.outcome-btn.yes { border-color: #bbf7d0; background: #f0fdf4; }
+.outcome-btn.no  { border-color: #fecaca; background: #fef2f2; }
+.outcome-btn .outcome-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+.outcome-btn.yes .outcome-label { color: var(--yes); }
+.outcome-btn.no  .outcome-label { color: var(--no); }
+.outcome-btn .outcome-pct { font-size: 22px; margin: 2px 0; }
+.outcome-btn.yes .outcome-pct { color: var(--yes); }
+.outcome-btn.no  .outcome-pct { color: var(--no); }
+.outcome-btn .outcome-pool { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+.outcome-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px; margin-bottom: 12px;
+}
+.section h2 { font-size: 14px; margin: 0 0 10px; }
+
+.pos-list { display: flex; flex-direction: column; gap: 0; }
+.pos-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid var(--border-2);
+  font-size: 13px;
+}
+.pos-item:last-child { border-bottom: none; }
+.pos-item .side-tag {
+  width: 40px; text-align: center; font-size: 10px; font-weight: 700;
+  padding: 3px 0; border-radius: 6px;
+}
+.side-tag.yes { background: var(--yes-bg); color: var(--yes); }
+.side-tag.no { background: var(--no-bg); color: var(--no); }
+.pos-item .username { flex: 1; font-weight: 500; }
+.pos-item .stake { font-weight: 600; }
+
+.chart-wrap { width: 100%; height: 140px; }
+
+.comment {
+  padding: 10px 0; border-bottom: 1px solid var(--border-2);
+}
+.comment:last-child { border-bottom: none; }
+.comment-head {
+  display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;
+}
+.comment-user { font-weight: 600; font-size: 13px; }
+.comment-time { font-size: 11px; color: var(--text-dim); }
+.comment-body { font-size: 13px; color: var(--text); white-space: pre-wrap; word-wrap: break-word; }
+
+.comment-form { display: flex; gap: 8px; margin-top: 10px; }
+.comment-form textarea {
+  flex: 1; padding: 9px 12px; border: 1px solid var(--border);
+  border-radius: 10px; resize: none; outline: none; min-height: 40px; max-height: 120px;
+}
+.comment-form textarea:focus { border-color: var(--accent); }
+
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: var(--text-muted); }
+.field input, .field textarea, .field select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 10px; outline: none; background: #fff;
+}
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 70px; }
+
+.auth-wrap { max-width: 340px; margin: 20px auto; }
+.auth-tabs {
+  display: flex; background: var(--border-2); border-radius: 10px;
+  padding: 3px; margin-bottom: 16px;
+}
+.auth-tabs button {
+  flex: 1; padding: 8px; border: none; background: transparent;
+  border-radius: 8px; font-weight: 600; font-size: 13px; color: var(--text-muted);
+}
+.auth-tabs button.active { background: #fff; color: var(--text); box-shadow: var(--shadow); }
+.auth-form .field { margin-bottom: 12px; }
+.auth-form button[type=submit] {
+  width: 100%; padding: 11px; border: none; border-radius: 10px;
+  background: var(--text); color: #fff; font-weight: 600; font-size: 14px;
+  margin-top: 4px;
+}
+.error { color: var(--no); font-size: 12px; margin-top: 10px; text-align: center; }
+
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15,23,42,0.5);
+  z-index: 100; display: flex; align-items: flex-end; justify-content: center;
+  padding: 0; animation: fade 0.15s;
+}
+@media (min-width: 640px) { .modal-backdrop { align-items: center; padding: 20px; } }
+.modal {
+  background: #fff; width: 100%; max-width: 440px;
+  border-radius: 16px 16px 0 0; padding: 16px 18px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  animation: slideUp 0.2s;
+}
+@media (min-width: 640px) { .modal { border-radius: 16px; padding-bottom: 18px; } }
+.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.modal-head h3 { font-size: 16px; margin: 0; }
+.modal-close {
+  border: none; background: transparent; font-size: 22px;
+  line-height: 1; color: var(--text-muted); padding: 0 4px;
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(20px); } to { transform: translateY(0); } }
+
+#toast-root { position: fixed; top: 60px; left: 0; right: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+.toast {
+  background: var(--text); color: #fff; padding: 9px 14px;
+  border-radius: 10px; font-size: 13px; font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  opacity: 0; transform: translateY(-8px); transition: all 0.2s;
+  max-width: 90%;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast-success { background: var(--yes); }
+.toast-error { background: var(--no); }
+
+.loading, .empty {
+  text-align: center; padding: 40px 20px;
+  color: var(--text-muted); font-size: 13px;
+}
+.error-box {
+  background: var(--no-bg); color: var(--no); padding: 10px 14px;
+  border-radius: 10px; font-size: 13px;
+}
+
+.admin-tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--border); }
+.admin-tabs button {
+  border: none; background: transparent; padding: 9px 12px;
+  font-weight: 600; font-size: 13px; color: var(--text-muted);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.admin-tabs button.active { color: var(--text); border-bottom-color: var(--text); }
+.admin-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--border-2); font-size: 13px;
+}
+.admin-row:last-child { border-bottom: none; }
+.admin-row .grow { flex: 1; min-width: 0; }
+.admin-row .name { font-weight: 600; }
+.admin-row .meta { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.admin-row .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.profile-head {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+}
+.profile-head .avatar-lg {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 24px; flex-shrink: 0;
+}
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.stat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px; text-align: center;
+}
+.stat .v { font-size: 18px; font-weight: 700; }
+.stat .l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+.stat.win .v { color: var(--yes); }
+.stat.lose .v { color: var(--no); }
+</style>
 </head>
 <body>
 <header id="topbar"></header>
@@ -13,6 +379,1381 @@
 <nav id="bottomnav"></nav>
 <div id="modal-root"></div>
 <div id="toast-root"></div>
-<script type="module" src="js/app.js"></script>
+
+<script type="module">
+// =========================================================
+// CONFIG — METTI QUI I TUOI VALORI SUPABASE
+// =========================================================
+const SUPABASE_URL = 'https://XXXXXXXX.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOi...';
+
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+// Client — la variabile si chiama `sb` per NON entrare in conflitto
+// con la proprietà globale `window.supabase` esposta dalla SDK.
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storageKey: 'betfriends-auth',
+    detectSessionInUrl: false
+  }
+});
+
+// =========================================================
+// STATE
+// =========================================================
+const state = {
+  session: null,
+  profile: null,
+  categories: []
+};
+
+// =========================================================
+// UTILS
+// =========================================================
+function escapeHTML(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function fmt(n) {
+  const v = Number(n) || 0;
+  return v.toLocaleString('it-IT', { maximumFractionDigits: 0 });
+}
+function pct(a, b) {
+  const total = (Number(a) || 0) + (Number(b) || 0);
+  if (!total) return 50;
+  return Math.round((Number(a) / total) * 100);
+}
+function deadlineLabel(deadline) {
+  const d = new Date(deadline);
+  const now = new Date();
+  const diffMs = d - now;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMs < 0) return 'Chiusa';
+  if (diffMin < 60) return `Tra ${diffMin}m`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `Tra ${diffH}h`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return `Tra ${diffD}g`;
+  return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+}
+function fullDate(d) {
+  return new Date(d).toLocaleString('it-IT', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+function timeAgo(d) {
+  const t = new Date(d).getTime();
+  const diff = Math.floor((Date.now() - t) / 1000);
+  if (diff < 60) return 'adesso';
+  if (diff < 3600) return Math.floor(diff/60) + 'm fa';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h fa';
+  if (diff < 604800) return Math.floor(diff/86400) + 'g fa';
+  return new Date(d).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+}
+function statusInfo(bet, closed) {
+  if (bet.status === 'resolved') {
+    return bet.outcome === 'yes'
+      ? { key: 'resolved-yes', label: 'RISOLTA · SI' }
+      : { key: 'resolved-no',  label: 'RISOLTA · NO' };
+  }
+  if (bet.status === 'cancelled') return { key: 'cancelled', label: 'ANNULLATA' };
+  if (bet.status === 'closed')    return { key: 'closed',    label: 'CHIUSA' };
+  if (closed)                     return { key: 'expired',   label: 'SCADUTA' };
+  return                                 { key: 'open',      label: 'APERTA' };
+}
+function statusLabel(bet, closed) {
+  return statusInfo(bet, closed).label;
+}
+function toLocalInputValue(date) {
+  const d = new Date(date);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// =========================================================
+// AUTH HELPERS
+// =========================================================
+async function getSession() {
+  const { data } = await sb.auth.getSession();
+  return data.session;
+}
+async function getProfile(userId) {
+  const { data } = await sb.from('profiles').select('*').eq('id', userId).maybeSingle();
+  return data;
+}
+async function signUp(username, password) {
+  const email = username.toLowerCase() + '@betfriends.local';
+  const { data, error } = await sb.auth.signUp({
+    email, password,
+    options: { data: { username } }
+  });
+  if (error) throw error;
+  return data;
+}
+async function signIn(username, password) {
+  const email = username.toLowerCase() + '@betfriends.local';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
+async function signOut() {
+  await sb.auth.signOut();
+}
+
+// =========================================================
+// ROUTER
+// =========================================================
+const routes = [];
+let onNav = null;
+function route(path, handler) { routes.push({ path, handler }); }
+function navigate(hash) { location.hash = hash; }
+function setOnNav(fn) { onNav = fn; }
+function startRouter() {
+  window.addEventListener('hashchange', resolveRoute);
+  resolveRoute();
+}
+function parseHash() {
+  const raw = location.hash.replace(/^#/, '') || '/';
+  const [path, query] = raw.split('?');
+  const params = Object.fromEntries(new URLSearchParams(query || ''));
+  return { path, query: params };
+}
+function match(pattern, path) {
+  const pp = pattern.split('/').filter(Boolean);
+  const pa = path.split('/').filter(Boolean);
+  if (pp.length !== pa.length) return null;
+  const params = {};
+  for (let i = 0; i < pp.length; i++) {
+    if (pp[i].startsWith(':')) params[pp[i].slice(1)] = decodeURIComponent(pa[i]);
+    else if (pp[i] !== pa[i]) return null;
+  }
+  return params;
+}
+async function resolveRoute() {
+  const { path, query } = parseHash();
+  const app = document.getElementById('app');
+  if (onNav) onNav();
+  for (const r of routes) {
+    const m = match(r.path, path);
+    if (m) {
+      app.innerHTML = '';
+      try { await r.handler({ ...m, ...query }); }
+      catch (e) {
+        console.error(e);
+        app.innerHTML = '<div class="error-box">Errore: ' + escapeHTML(e.message || String(e)) + '</div>';
+      }
+      return;
+    }
+  }
+  app.innerHTML = '<div class="empty">Pagina non trovata</div>';
+}
+function currentPath() { return parseHash().path; }
+
+// =========================================================
+// REALTIME
+// =========================================================
+let channels = [];
+let debounceTimer = null;
+function subscribe(tables, callback) {
+  unsubscribeAll();
+  const trigger = () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(callback, 120);
+  };
+  for (const t of tables) {
+    const ch = sb.channel('rt-' + t + '-' + Math.random().toString(36).slice(2))
+      .on('postgres_changes', { event: '*', schema: 'public', table: t }, trigger)
+      .subscribe();
+    channels.push(ch);
+  }
+}
+function unsubscribeAll() {
+  clearTimeout(debounceTimer);
+  for (const ch of channels) sb.removeChannel(ch);
+  channels = [];
+}
+
+// =========================================================
+// COMPONENTS
+// =========================================================
+function renderNav() {
+  const top = document.getElementById('topbar');
+  const bottom = document.getElementById('bottomnav');
+  const p = state.profile;
+
+  top.innerHTML = `
+    <a href="#/" class="brand">NomentanoMarket</a>
+    <input id="topSearch" class="search-input" type="search" placeholder="Cerca…" value="">
+    <div class="top-right">
+      ${p
+        ? `<a href="#/u/${encodeURIComponent(p.username)}" class="avatar" title="${escapeHTML(p.username)}">${escapeHTML(p.username[0].toUpperCase())}</a>
+           ${p.is_admin ? `<a href="#/admin" class="icon-btn" title="Admin">⚙</a>` : ''}
+           <button id="btnLogout" class="icon-btn" title="Esci">⎋</button>`
+        : `<a href="#/login" class="btn-login">Accedi</a>`}
+    </div>
+  `;
+
+  const searchInput = top.querySelector('#topSearch');
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const q = e.target.value.trim();
+      if (q) navigate('/search?q=' + encodeURIComponent(q));
+    }
+  });
+
+  const logoutBtn = top.querySelector('#btnLogout');
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await signOut();
+    navigate('/');
+  });
+
+  bottom.innerHTML = `
+    <a href="#/" data-route="/">${iconHome()}<span>Home</span></a>
+    <a href="#/new" data-route="/new">${iconPlus()}<span>Nuova</span></a>
+    <a href="#/search" data-route="/search">${iconSearch()}<span>Cerca</span></a>
+    <a href="${p ? '#/u/' + encodeURIComponent(p.username) : '#/login'}" data-route="/u">${iconUser()}<span>Profilo</span></a>
+  `;
+  highlightBottom();
+  window.addEventListener('hashchange', highlightBottom);
+}
+function highlightBottom() {
+  const path = currentPath();
+  document.querySelectorAll('#bottomnav a').forEach(a => {
+    const r = a.dataset.route;
+    const active = r === '/' ? path === '/' : path.startsWith(r);
+    a.classList.toggle('active', active);
+  });
+}
+function toast(msg, type = 'info') {
+  const root = document.getElementById('toast-root');
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  root.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 200);
+  }, 2800);
+}
+function openModal({ title, bodyHTML, onMount }) {
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-head">
+          <h3>${escapeHTML(title)}</h3>
+          <button class="modal-close" type="button">×</button>
+        </div>
+        <div class="modal-body">${bodyHTML}</div>
+      </div>
+    </div>
+  `;
+  const backdrop = root.querySelector('.modal-backdrop');
+  const close = () => { root.innerHTML = ''; document.removeEventListener('keydown', onKey); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  root.querySelector('.modal-close').onclick = close;
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+  if (onMount) onMount(root, close);
+  return close;
+}
+function iconHome() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>`;
+}
+function iconPlus() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
+}
+function iconSearch() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
+}
+function iconUser() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>`;
+}
+function priceChartSVG(positions, width = 640, height = 140) {
+  const sorted = [...positions].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  if (!sorted.length) {
+    return `<div class="empty" style="padding:20px 0">Nessun dato</div>`;
+  }
+  const pad = { l: 6, r: 6, t: 8, b: 8 };
+  const w = width - pad.l - pad.r;
+  const h = height - pad.t - pad.b;
+  const t0 = new Date(sorted[0].created_at).getTime();
+  const t1 = Math.max(Date.now(), new Date(sorted[sorted.length-1].created_at).getTime());
+  const span = Math.max(1, t1 - t0);
+  let y = 0, n = 0;
+  const points = [{ x: 0, p: 0.5 }];
+  for (const pos of sorted) {
+    if (pos.side === 'yes') y += Number(pos.stake);
+    else n += Number(pos.stake);
+    const total = y + n;
+    const p = total ? y / total : 0.5;
+    const x = (new Date(pos.created_at).getTime() - t0) / span;
+    points.push({ x, p });
+  }
+  points.push({ x: 1, p: points[points.length-1].p });
+  const toXY = (pt) => [pad.l + pt.x * w, pad.t + (1 - pt.p) * h];
+  const path = points.map((pt, i) => (i === 0 ? 'M' : 'L') + toXY(pt).map(v => v.toFixed(1)).join(',')).join(' ');
+  const midY = pad.t + 0.5 * h;
+  return `
+    <svg class="chart-wrap" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+      <line x1="${pad.l}" y1="${midY}" x2="${width-pad.r}" y2="${midY}" stroke="#e5e7eb" stroke-dasharray="3 3"/>
+      <path d="${path}" fill="none" stroke="#16a34a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>
+  `;
+}
+
+// =========================================================
+// PAGE: AUTH
+// =========================================================
+function renderAuth() {
+  if (state.profile) { navigate('/'); return; }
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="auth-wrap">
+      <div class="auth-tabs">
+        <button data-tab="login" class="active" type="button">Accedi</button>
+        <button data-tab="signup" type="button">Registrati</button>
+      </div>
+      <form id="authForm" class="auth-form" autocomplete="on">
+        <div class="field">
+          <label>Nome utente</label>
+          <input type="text" name="username" autocomplete="username" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+" title="Solo lettere, numeri e underscore">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" name="password" autocomplete="current-password" required minlength="6">
+        </div>
+        <button type="submit" id="authSubmit">Accedi</button>
+      </form>
+      <p id="authError" class="error"></p>
+    </div>
+  `;
+  let mode = 'login';
+  app.querySelectorAll('.auth-tabs button').forEach(t => {
+    t.onclick = () => {
+      app.querySelectorAll('.auth-tabs button').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      mode = t.dataset.tab;
+      const submit = app.querySelector('#authSubmit');
+      submit.textContent = mode === 'login' ? 'Accedi' : 'Registrati';
+      const pwd = app.querySelector('input[name=password]');
+      pwd.autocomplete = mode === 'login' ? 'current-password' : 'new-password';
+    };
+  });
+  app.querySelector('#authForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const username = f.username.value.trim().toLowerCase();
+    const password = f.password.value;
+    const errEl = app.querySelector('#authError');
+    errEl.textContent = '';
+    if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+      errEl.textContent = 'Nome utente: 3-20 caratteri (lettere, numeri, _).';
+      return;
+    }
+    const submit = app.querySelector('#authSubmit');
+    submit.disabled = true;
+    try {
+      if (mode === 'login') await signIn(username, password);
+      else await signUp(username, password);
+      toast(mode === 'login' ? 'Bentornato!' : 'Registrato!', 'success');
+      setTimeout(() => navigate('/'), 150);
+    } catch (err) {
+      errEl.textContent = translateAuthError(err.message || String(err));
+    } finally {
+      submit.disabled = false;
+    }
+  };
+}
+function translateAuthError(msg) {
+  if (/Invalid login/i.test(msg)) return 'Nome utente o password errati.';
+  if (/already registered/i.test(msg)) return 'Nome utente già in uso.';
+  if (/duplicate key/i.test(msg)) return 'Nome utente già in uso.';
+  if (/Password should be/i.test(msg)) return 'Password troppo corta (min. 6 caratteri).';
+  if (/rate limit/i.test(msg)) return 'Troppi tentativi, riprova più tardi.';
+  return msg;
+}
+
+// =========================================================
+// PAGE: HOME
+// =========================================================
+let currentCat = 'all';
+async function renderHome() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="page-header">
+      <h1>Mercati</h1>
+      <a href="#/new" class="btn-primary btn-sm">+ Nuovo</a>
+    </div>
+    <div id="catBar" class="cat-bar"></div>
+    <div id="betsList" class="bets-list"><div class="loading">Caricamento…</div></div>
+  `;
+  await loadCategories();
+  renderCatBar();
+  await loadHomeBets();
+  subscribe(['bets', 'positions'], () => loadHomeBets());
+}
+async function loadCategories() {
+  if (state.categories.length) return;
+  const { data } = await sb.from('categories').select('*').order('sort_order');
+  state.categories = data || [];
+}
+function renderCatBar() {
+  const bar = document.getElementById('catBar');
+  if (!bar) return;
+  const cats = [{ id: 'all', name: 'Tutte' }, ...state.categories];
+  bar.innerHTML = cats.map(c =>
+    `<button type="button" class="chip ${String(currentCat) === String(c.id) ? 'active' : ''}" data-id="${c.id}">${escapeHTML(c.name)}</button>`
+  ).join('');
+  bar.querySelectorAll('.chip').forEach(chip => {
+    chip.onclick = () => {
+      currentCat = chip.dataset.id;
+      renderCatBar();
+      loadHomeBets();
+    };
+  });
+}
+async function loadHomeBets() {
+  const list = document.getElementById('betsList');
+  if (!list) return;
+  let q = sb.from('bets_with_stats').select('*, category:categories(name)').order('created_at', { ascending: false }).limit(100);
+  if (currentCat !== 'all') q = q.eq('category_id', currentCat);
+  const { data, error } = await q;
+  if (error) { list.innerHTML = `<div class="error-box">${escapeHTML(error.message)}</div>`; return; }
+  if (!data?.length) { list.innerHTML = '<div class="empty">Nessuna scommessa. Creane una!</div>'; return; }
+  list.innerHTML = data.map(betCardHTML).join('');
+  list.querySelectorAll('.bet-card').forEach(el => {
+    el.onclick = () => navigate('/bet/' + el.dataset.id);
+  });
+}
+function betCardHTML(b) {
+  const yes = Number(b.yes_pool) || 0;
+  const no = Number(b.no_pool) || 0;
+  const yPct = pct(yes, no);
+  const nPct = 100 - yPct;
+  const closed = new Date(b.deadline) < new Date();
+  const st = statusInfo(b, closed);
+  return `
+    <div class="bet-card" data-id="${b.id}" data-status="${st.key}">
+      <div class="bet-card-head">
+        <span class="bet-cat">${escapeHTML(b.category?.name || 'Senza categoria')}</span>
+        <span class="bet-status status-${st.key}">${st.label}</span>
+      </div>
+      <h3 class="bet-title">${escapeHTML(b.title)}</h3>
+      <div class="pool-bar">
+        <div class="pool-yes" style="width:${yPct}%"></div>
+        <div class="pool-no" style="width:${nPct}%"></div>
+      </div>
+      <div class="pool-row">
+        <span class="pool-yes-label">SI ${yPct}% · ${fmt(yes)}cr</span>
+        <span class="pool-no-label">NO ${nPct}% · ${fmt(no)}cr</span>
+      </div>
+      <div class="bet-card-foot">
+        <span>${b.bettors} ${b.bettors === 1 ? 'giocatore' : 'giocatori'}</span>
+        <span>${closed ? 'Chiusa' : deadlineLabel(b.deadline)}</span>
+      </div>
+    </div>
+  `;
+}
+
+// =========================================================
+// PAGE: BET
+// =========================================================
+async function renderBet(id) {
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="loading">Caricamento…</div>';
+  let bet, positions = [], comments = [];
+
+  async function load() {
+    const [b, p, c] = await Promise.all([
+      sb.from('bets_with_stats')
+        .select('*, category:categories(name), creator:profiles(username)')
+        .eq('id', id).maybeSingle(),
+      sb.from('positions')
+        .select('*, user:profiles(username)')
+        .eq('bet_id', id)
+        .order('created_at', { ascending: false }),
+      sb.from('comments')
+        .select('*, user:profiles(username)')
+        .eq('bet_id', id)
+        .order('created_at', { ascending: true })
+    ]);
+    if (b.error || !b.data) {
+      app.innerHTML = '<div class="error-box">Scommessa non trovata.</div>';
+      return;
+    }
+    bet = b.data;
+    positions = p.data || [];
+    comments = c.data || [];
+    renderBetPage();
+  }
+
+  function renderBetPage() {
+    const yes = Number(bet.yes_pool) || 0;
+    const no = Number(bet.no_pool) || 0;
+    const yPct = pct(yes, no);
+    const nPct = 100 - yPct;
+    const closed = new Date(bet.deadline) < new Date();
+    const isOpen = bet.status === 'open' && !closed;
+    const me = state.profile;
+    const myYes = positions.filter(p => p.user_id === me?.id && p.side === 'yes').reduce((s,p)=>s+Number(p.stake),0);
+    const myNo  = positions.filter(p => p.user_id === me?.id && p.side === 'no').reduce((s,p)=>s+Number(p.stake),0);
+    const iBetYes = myYes > 0;
+    const iBetNo  = myNo > 0;
+    const st = statusInfo(bet, closed);
+
+    app.innerHTML = `
+      <div class="bet-detail" data-status="${st.key}">
+        <div class="bet-card-head">
+          <span class="bet-cat">${escapeHTML(bet.category?.name || 'Senza categoria')}</span>
+          <span class="bet-status status-${st.key}">${st.label}</span>
+        </div>
+        <h1>${escapeHTML(bet.title)}</h1>
+        ${bet.description ? `<div class="bet-desc">${escapeHTML(bet.description)}</div>` : ''}
+        <div class="bet-card-foot" style="margin-bottom:6px">
+          <span>di ${escapeHTML(bet.creator?.username || '?')}</span>
+          <span>${closed ? 'Scaduta il' : 'Scade'} ${fullDate(bet.deadline)}</span>
+        </div>
+
+        <div class="outcome-grid">
+          <button class="outcome-btn yes" id="btnYes" ${(!isOpen || iBetNo || !me) ? 'disabled' : ''}>
+            <div class="outcome-label">SI</div>
+            <div class="outcome-pct">${yPct}%</div>
+            <div class="outcome-pool">${fmt(yes)}cr · ${iBetYes ? 'tu: ' + fmt(myYes) + 'cr' : (iBetNo ? 'hai puntato NO' : 'paga ' + (yPct ? (100/yPct).toFixed(2) : '—') + '×')}</div>
+          </button>
+          <button class="outcome-btn no" id="btnNo" ${(!isOpen || iBetYes || !me) ? 'disabled' : ''}>
+            <div class="outcome-label">NO</div>
+            <div class="outcome-pct">${nPct}%</div>
+            <div class="outcome-pool">${fmt(no)}cr · ${iBetNo ? 'tu: ' + fmt(myNo) + 'cr' : (iBetYes ? 'hai puntato SI' : 'paga ' + (nPct ? (100/nPct).toFixed(2) : '—') + '×')}</div>
+          </button>
+        </div>
+
+        ${!me ? `<div class="empty" style="padding:6px 0 2px"><a href="#/login" style="color:var(--accent);font-weight:600">Accedi per puntare</a></div>` : ''}
+        ${me && !isOpen && bet.status === 'open' ? `<div class="empty" style="padding:6px 0 2px">Puntate chiuse.</div>` : ''}
+      </div>
+
+      <div class="section">
+        <h2>Andamento SI</h2>
+        ${priceChartSVG(positions)}
+      </div>
+
+      <div class="section">
+        <h2>Puntate (${positions.length})</h2>
+        ${positions.length ? `<div class="pos-list">${positions.map(posItem).join('')}</div>` : '<div class="empty" style="padding:14px 0">Nessuna puntata</div>'}
+      </div>
+
+      ${(me?.is_admin && (bet.status === 'open' || bet.status === 'closed')) ? adminPanelHTML(bet) : ''}
+
+      <div class="section">
+        <h2>Commenti (${comments.length})</h2>
+        <div id="commentsList">
+          ${comments.length ? comments.map(commentItem).join('') : '<div class="empty" style="padding:14px 0">Ancora nessun commento</div>'}
+        </div>
+        ${me ? `
+          <form class="comment-form" id="commentForm">
+            <textarea name="body" maxlength="500" placeholder="Scrivi un commento…" rows="1"></textarea>
+            <button type="submit" class="btn-primary btn-sm">Invia</button>
+          </form>
+        ` : `<div class="empty" style="padding:14px 0"><a href="#/login" style="color:var(--accent);font-weight:600">Accedi per commentare</a></div>`}
+      </div>
+    `;
+    wireBetEvents();
+  }
+
+  function wireBetEvents() {
+    const btnYes = document.getElementById('btnYes');
+    const btnNo  = document.getElementById('btnNo');
+    if (btnYes && !btnYes.disabled) btnYes.onclick = () => openBetModal('yes');
+    if (btnNo && !btnNo.disabled) btnNo.onclick = () => openBetModal('no');
+
+    const cf = document.getElementById('commentForm');
+    if (cf) cf.onsubmit = async (e) => {
+      e.preventDefault();
+      const body = e.target.body.value.trim();
+      if (!body) return;
+      const btn = e.target.querySelector('button');
+      btn.disabled = true;
+      const { error } = await sb.from('comments').insert({ bet_id: bet.id, user_id: state.profile.id, body });
+      btn.disabled = false;
+      if (error) { toast(error.message, 'error'); return; }
+      e.target.body.value = '';
+    };
+    const ta = cf?.querySelector('textarea');
+    if (ta) ta.addEventListener('input', () => {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
+    });
+
+    document.querySelectorAll('[data-admin]').forEach(el => {
+      el.onclick = () => handleBetAdminAction(el.dataset.admin);
+    });
+  }
+
+  function openBetModal(side) {
+    const sideLabel = side === 'yes' ? 'SI' : 'NO';
+    const otherLabel = side === 'yes' ? 'NO' : 'SI';
+    const bal = Number(state.profile.balance) || 0;
+    openModal({
+      title: `Punta su ${sideLabel}`,
+      bodyHTML: `
+        <form id="betForm">
+          <div class="field">
+            <label>Importo (crediti · saldo: ${fmt(bal)})</label>
+            <input type="number" name="stake" min="1" step="1" value="100" required>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+            ${[50,100,250,500].map(v => `<button type="button" class="chip" data-quick="${v}">${v}</button>`).join('')}
+            <button type="button" class="chip" data-quick="all">Tutto</button>
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">
+            Ricordati: potrai puntare solo su <b>${sideLabel}</b> per questa scommessa (non su ${otherLabel}).
+          </p>
+          <button type="submit" class="btn-primary" style="width:100%">Conferma</button>
+          <p class="error" id="betErr"></p>
+        </form>
+      `,
+      onMount: (root, close) => {
+        const form = root.querySelector('#betForm');
+        const input = form.stake;
+        root.querySelectorAll('[data-quick]').forEach(b => {
+          b.onclick = () => {
+            if (b.dataset.quick === 'all') input.value = Math.floor(bal);
+            else input.value = b.dataset.quick;
+          };
+        });
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const stake = parseInt(input.value, 10);
+          const errEl = root.querySelector('#betErr');
+          errEl.textContent = '';
+          if (!stake || stake <= 0) { errEl.textContent = 'Importo non valido'; return; }
+          if (stake > bal) { errEl.textContent = 'Saldo insufficiente'; return; }
+          const submit = form.querySelector('button[type=submit]');
+          submit.disabled = true;
+          const { error } = await sb.rpc('place_bet', {
+            p_bet_id: bet.id, p_side: side, p_stake: stake
+          });
+          submit.disabled = false;
+          if (error) { errEl.textContent = error.message; return; }
+          state.profile.balance = bal - stake;
+          toast('Puntata piazzata!', 'success');
+          close();
+        };
+      }
+    });
+  }
+
+  async function handleBetAdminAction(action) {
+    if (action === 'close') {
+      if (!confirm('Chiudere le puntate? Non sarà più possibile puntare.')) return;
+      const { error } = await sb.rpc('close_bet', { p_bet_id: bet.id });
+      if (error) return toast(error.message, 'error');
+      toast('Scommessa chiusa', 'success');
+    }
+    if (action === 'cancel') {
+      if (!confirm('Annullare la scommessa? Tutti saranno rimborsati con +2%.')) return;
+      const { error } = await sb.rpc('cancel_bet', { p_bet_id: bet.id });
+      if (error) return toast(error.message, 'error');
+      toast('Scommessa annullata', 'success');
+    }
+    if (action === 'resolve-yes' || action === 'resolve-no') {
+      const outcome = action === 'resolve-yes' ? 'yes' : 'no';
+      if (!confirm(`Risolvere come ${outcome.toUpperCase()}? Il pool verrà distribuito.`)) return;
+      const { error } = await sb.rpc('resolve_bet', { p_bet_id: bet.id, p_outcome: outcome });
+      if (error) return toast(error.message, 'error');
+      toast('Scommessa risolta', 'success');
+    }
+  }
+
+  function posItem(p) {
+    return `
+      <div class="pos-item">
+        <span class="side-tag ${p.side}">${p.side === 'yes' ? 'SI' : 'NO'}</span>
+        <a class="username" href="#/u/${encodeURIComponent(p.user?.username || '')}">${escapeHTML(p.user?.username || '?')}</a>
+        <span class="stake">${fmt(p.stake)}cr</span>
+      </div>
+    `;
+  }
+  function commentItem(c) {
+    return `
+      <div class="comment">
+        <div class="comment-head">
+          <a class="comment-user" href="#/u/${encodeURIComponent(c.user?.username || '')}">${escapeHTML(c.user?.username || '?')}</a>
+          <span class="comment-time">${timeAgo(c.created_at)}</span>
+        </div>
+        <div class="comment-body">${escapeHTML(c.body)}</div>
+      </div>
+    `;
+  }
+  function adminPanelHTML(b) {
+    const showResolve = b.status === 'open' || b.status === 'closed';
+    return `
+      <div class="section" style="border-color:#c7d2fe;background:#eef2ff">
+        <h2>Pannello admin</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${b.status === 'open' ? `<button class="btn-secondary btn-sm" data-admin="close">Chiudi puntate</button>` : ''}
+          ${showResolve ? `
+            <button class="btn-yes btn-sm" data-admin="resolve-yes">Risolvi SI</button>
+            <button class="btn-no btn-sm" data-admin="resolve-no">Risolvi NO</button>
+            <button class="btn-secondary btn-sm" data-admin="cancel">Annulla</button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  await load();
+  subscribe(['bets', 'positions', 'comments'], () => load());
+}
+
+// =========================================================
+// PAGE: NEW BET
+// =========================================================
+async function renderNewBet() {
+  if (!state.profile) { navigate('/login'); return; }
+  const app = document.getElementById('app');
+  const cats = state.categories.length
+    ? state.categories
+    : (await sb.from('categories').select('*').order('sort_order')).data || [];
+  state.categories = cats;
+
+  if (!cats.length) {
+    app.innerHTML = '<div class="empty">Nessuna categoria disponibile. Chiedi all\'admin di crearne una.</div>';
+    return;
+  }
+
+  const defaultDeadline = new Date(Date.now() + 24 * 3600 * 1000);
+  app.innerHTML = `
+    <div class="page-header">
+      <h1>Nuova scommessa</h1>
+    </div>
+    <form id="newBetForm" class="section">
+      <div class="field">
+        <label>Titolo *</label>
+        <input type="text" name="title" required maxlength="140" placeholder="Es. Domani pioverà?">
+      </div>
+      <div class="field">
+        <label>Descrizione</label>
+        <textarea name="description" maxlength="600" placeholder="Dettagli, regole di risoluzione…"></textarea>
+      </div>
+      <div class="field">
+        <label>Categoria *</label>
+        <select name="category_id" required>
+          ${cats.map(c => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Scadenza puntate *</label>
+        <input type="datetime-local" name="deadline" required value="${toLocalInputValue(defaultDeadline)}">
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%">Crea scommessa</button>
+      <p class="error" id="newBetErr"></p>
+    </form>
+  `;
+  app.querySelector('#newBetForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const err = app.querySelector('#newBetErr');
+    err.textContent = '';
+    const title = f.title.value.trim();
+    const description = f.description.value.trim() || null;
+    const category_id = parseInt(f.category_id.value, 10);
+    const deadline = new Date(f.deadline.value);
+    if (!title) { err.textContent = 'Titolo obbligatorio'; return; }
+    if (!(deadline > new Date())) { err.textContent = 'La scadenza deve essere nel futuro'; return; }
+    const submit = f.querySelector('button[type=submit]');
+    submit.disabled = true;
+    const { data, error } = await sb.from('bets').insert({
+      creator_id: state.profile.id,
+      title, description, category_id,
+      deadline: deadline.toISOString()
+    }).select('id').single();
+    submit.disabled = false;
+    if (error) { err.textContent = error.message; return; }
+    toast('Scommessa creata!', 'success');
+    navigate('/bet/' + data.id);
+  };
+}
+
+// =========================================================
+// PAGE: PROFILE
+// =========================================================
+async function renderProfile(username) {
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="loading">Caricamento…</div>';
+  let profile, positions = [], createdBets = [];
+
+  async function load() {
+    const p = await sb.from('profiles').select('*').eq('username', username).maybeSingle();
+    if (p.error || !p.data) { app.innerHTML = '<div class="error-box">Utente non trovato.</div>'; return; }
+    profile = p.data;
+    const [pos, cb] = await Promise.all([
+      sb.from('positions')
+        .select('*, bet:bets(id, title, status, outcome, deadline, category_id)')
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(200),
+      sb.from('bets')
+        .select('id, title, status, deadline, category:categories(name)')
+        .eq('creator_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+    ]);
+    positions = pos.data || [];
+    createdBets = cb.data || [];
+    renderProfilePage();
+  }
+
+  function renderProfilePage() {
+    const totalWagered = positions.reduce((s,p) => s + Number(p.stake), 0);
+    const resolved = positions.filter(p => p.bet?.status === 'resolved');
+    const won = resolved.filter(p => p.bet.outcome === p.side);
+    const winRate = resolved.length ? Math.round(won.length / resolved.length * 100) : 0;
+    const totalWonStake = won.reduce((s,p) => s + Number(p.stake), 0);
+
+    app.innerHTML = `
+      <div class="profile-head">
+        <div class="avatar-lg">${escapeHTML(profile.username[0].toUpperCase())}</div>
+        <div>
+          <h1 style="margin:0;font-size:20px">${escapeHTML(profile.username)}</h1>
+          <div style="color:var(--text-muted);font-size:12px">
+            Iscritto ${fullDate(profile.created_at)}
+            ${profile.is_admin ? ' · <b style="color:var(--accent)">ADMIN</b>' : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="v">${fmt(profile.balance)}</div>
+          <div class="l">Crediti</div>
+        </div>
+        <div class="stat win">
+          <div class="v">${winRate}%</div>
+          <div class="l">Win rate</div>
+        </div>
+        <div class="stat">
+          <div class="v">${positions.length}</div>
+          <div class="l">Puntate</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Statistiche</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+          <div>Totale puntato: <b>${fmt(totalWagered)}cr</b></div>
+          <div>Vinte: <b style="color:var(--yes)">${won.length}</b></div>
+          <div>Risolte: <b>${resolved.length}</b></div>
+          <div>Puntato su vincenti: <b>${fmt(totalWonStake)}cr</b></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Puntate recenti</h2>
+        ${positions.length ? `<div class="pos-list">${positions.slice(0,20).map(posRow).join('')}</div>` : '<div class="empty" style="padding:14px 0">Nessuna puntata</div>'}
+      </div>
+
+      <div class="section">
+        <h2>Scommesse create (${createdBets.length})</h2>
+        ${createdBets.length ? `<div class="pos-list">${createdBets.map(betRow).join('')}</div>` : '<div class="empty" style="padding:14px 0">Nessuna scommessa creata</div>'}
+      </div>
+    `;
+
+    app.querySelectorAll('[data-bet]').forEach(el => {
+      el.onclick = () => location.hash = '/bet/' + el.dataset.bet;
+    });
+  }
+
+  function posRow(p) {
+    const won = p.bet?.status === 'resolved' && p.bet.outcome === p.side;
+    const lost = p.bet?.status === 'resolved' && p.bet.outcome !== p.side;
+    const color = won ? 'var(--yes)' : lost ? 'var(--no)' : 'var(--text-muted)';
+    const label = won ? '✓' : lost ? '✗' : '·';
+    return `
+      <div class="pos-item" data-bet="${p.bet?.id}" style="cursor:pointer">
+        <span class="side-tag ${p.side}">${p.side === 'yes' ? 'SI' : 'NO'}</span>
+        <div class="username" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${escapeHTML(p.bet?.title || '(eliminata)')}
+        </div>
+        <span class="stake" style="color:${color}">${label} ${fmt(p.stake)}cr</span>
+      </div>
+    `;
+  }
+  function betRow(b) {
+    const closed = new Date(b.deadline) < new Date();
+    const st = statusInfo(b, closed);
+    return `
+      <div class="pos-item" data-bet="${b.id}" style="cursor:pointer">
+        <span class="side-tag" style="background:var(--accent-bg);color:var(--accent);width:auto;padding:3px 8px">${escapeHTML(b.category?.name || '—')}</span>
+        <div class="username" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${escapeHTML(b.title)}
+        </div>
+        <span class="bet-status status-${st.key}" style="font-size:10px;padding:2px 6px">${st.label}</span>
+      </div>
+    `;
+  }
+
+  await load();
+  subscribe(['positions', 'bets'], () => load());
+}
+
+// =========================================================
+// PAGE: SEARCH
+// =========================================================
+async function renderSearch(initialQ) {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="page-header">
+      <h1>Cerca</h1>
+    </div>
+    <div class="section">
+      <input id="searchInput" class="search-input" type="search" placeholder="Scommesse, utenti, commenti…" value="${escapeHTML(initialQ || '')}">
+    </div>
+    <div id="searchResults"></div>
+  `;
+
+  const input = document.getElementById('searchInput');
+  let timer = null;
+
+  async function run(q) {
+    q = (q || '').trim();
+    if (q.length < 2) {
+      document.getElementById('searchResults').innerHTML = '<div class="empty">Digita almeno 2 caratteri</div>';
+      return;
+    }
+    const results = document.getElementById('searchResults');
+    results.innerHTML = '<div class="loading">Ricerca…</div>';
+
+    const [bets, users, comments] = await Promise.all([
+      sb.from('bets_with_stats').select('*, category:categories(name)').ilike('title', `%${q}%`).limit(20),
+      sb.from('profiles').select('*').ilike('username', `%${q}%`).limit(20),
+      sb.from('comments').select('*, user:profiles(username), bet:bets(id, title)').ilike('body', `%${q}%`).limit(20)
+    ]);
+
+    const parts = [];
+
+    if (bets.data?.length) {
+      parts.push(`
+        <div class="section">
+          <h2>Scommesse</h2>
+          <div class="bets-list">
+            ${bets.data.map(betResult).join('')}
+          </div>
+        </div>
+      `);
+    }
+    if (users.data?.length) {
+      parts.push(`
+        <div class="section">
+          <h2>Utenti</h2>
+          <div class="pos-list">
+            ${users.data.map(u => `
+              <div class="pos-item" data-user="${encodeURIComponent(u.username)}" style="cursor:pointer">
+                <span class="avatar" style="width:26px;height:26px;font-size:11px">${escapeHTML(u.username[0].toUpperCase())}</span>
+                <span class="username">${escapeHTML(u.username)}</span>
+                <span class="stake" style="color:var(--text-muted);font-weight:500">${fmt(u.balance)}cr</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `);
+    }
+    if (comments.data?.length) {
+      parts.push(`
+        <div class="section">
+          <h2>Commenti</h2>
+          ${comments.data.map(c => `
+            <div class="comment" data-bet="${c.bet?.id}" style="cursor:pointer">
+              <div class="comment-head">
+                <span class="comment-user">${escapeHTML(c.user?.username || '?')}</span>
+                <span class="comment-time">${timeAgo(c.created_at)}</span>
+              </div>
+              <div class="comment-body">${escapeHTML(c.body)}</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:2px">in "${escapeHTML(c.bet?.title || '—')}"</div>
+            </div>
+          `).join('')}
+        </div>
+      `);
+    }
+
+    results.innerHTML = parts.length ? parts.join('') : '<div class="empty">Nessun risultato</div>';
+    results.querySelectorAll('[data-bet]').forEach(el => el.onclick = () => navigate('/bet/' + el.dataset.bet));
+    results.querySelectorAll('[data-user]').forEach(el => el.onclick = () => navigate('/u/' + el.dataset.user));
+    results.querySelectorAll('.bet-card').forEach(el => el.onclick = () => navigate('/bet/' + el.dataset.id));
+  }
+
+  function betResult(b) {
+    const yes = Number(b.yes_pool) || 0;
+    const no = Number(b.no_pool) || 0;
+    const yPct = pct(yes, no);
+    const nPct = 100 - yPct;
+    return `
+      <div class="bet-card" data-id="${b.id}">
+        <div class="bet-card-head">
+          <span class="bet-cat">${escapeHTML(b.category?.name || '—')}</span>
+        </div>
+        <h3 class="bet-title" style="margin-bottom:8px">${escapeHTML(b.title)}</h3>
+        <div class="pool-bar">
+          <div class="pool-yes" style="width:${yPct}%"></div>
+          <div class="pool-no" style="width:${nPct}%"></div>
+        </div>
+        <div class="pool-row">
+          <span class="pool-yes-label">SI ${yPct}%</span>
+          <span class="pool-no-label">NO ${nPct}%</span>
+        </div>
+      </div>
+    `;
+  }
+
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => run(input.value), 250);
+  });
+  if (initialQ) run(initialQ);
+}
+
+// =========================================================
+// PAGE: ADMIN
+// =========================================================
+let adminTab = 'bets';
+async function renderAdmin() {
+  if (!state.profile?.is_admin) { navigate('/'); return; }
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="page-header"><h1>Admin</h1></div>
+    <div class="admin-tabs">
+      <button data-tab="bets" class="${adminTab==='bets'?'active':''}">Scommesse</button>
+      <button data-tab="users" class="${adminTab==='users'?'active':''}">Utenti</button>
+      <button data-tab="cats" class="${adminTab==='cats'?'active':''}">Categorie</button>
+    </div>
+    <div id="adminBody"><div class="loading">Caricamento…</div></div>
+  `;
+  app.querySelectorAll('.admin-tabs button').forEach(b => {
+    b.onclick = () => { adminTab = b.dataset.tab; renderAdmin(); };
+  });
+  if (adminTab === 'bets') await renderAdminBets();
+  if (adminTab === 'users') await renderAdminUsers();
+  if (adminTab === 'cats') await renderAdminCats();
+  subscribe(['bets', 'positions', 'profiles', 'categories'], () => {
+    if (adminTab === 'bets') renderAdminBets();
+    if (adminTab === 'users') renderAdminUsers();
+    if (adminTab === 'cats') renderAdminCats();
+  });
+}
+
+async function renderAdminBets() {
+  const body = document.getElementById('adminBody');
+  if (!body) return;
+  const { data, error } = await sb.from('bets_with_stats')
+    .select('*, category:categories(name)')
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error) { body.innerHTML = `<div class="error-box">${escapeHTML(error.message)}</div>`; return; }
+
+  body.innerHTML = `
+    <div class="section">
+      <h2>Gestione scommesse (${data.length})</h2>
+      ${data.map(betRowAdmin).join('') || '<div class="empty">Nessuna</div>'}
+    </div>
+  `;
+  body.querySelectorAll('[data-action]').forEach(btn => {
+    btn.onclick = () => handleAdminBetAction(btn.dataset.action, Number(btn.dataset.id));
+  });
+
+  function betRowAdmin(b) {
+    const closed = new Date(b.deadline) < new Date();
+    const yes = Number(b.yes_pool)||0, no = Number(b.no_pool)||0;
+    const yPct = pct(yes, no);
+    const st = statusInfo(b, closed);
+    const canAct = b.status === 'open' || b.status === 'closed';
+    return `
+      <div class="admin-row" data-status="${st.key}" style="flex-wrap:wrap">
+        <div class="grow">
+          <div class="name"><a href="#/bet/${b.id}">${escapeHTML(b.title)}</a></div>
+          <div class="meta">
+            <span>${escapeHTML(b.category?.name || '—')}</span>
+            <span>· SI ${yPct}% / NO ${100-yPct}%</span>
+            <span>· ${fmt(yes+no)}cr</span>
+            <span class="bet-status status-${st.key}" style="font-size:10px;padding:2px 6px">${st.label}</span>
+          </div>
+        </div>
+        <div class="actions">
+          ${b.status === 'open' ? `<button class="btn-secondary btn-sm" data-action="close" data-id="${b.id}">Chiudi</button>` : ''}
+          ${canAct ? `
+            <button class="btn-yes btn-sm" data-action="resolve-yes" data-id="${b.id}">SI</button>
+            <button class="btn-no btn-sm" data-action="resolve-no" data-id="${b.id}">NO</button>
+            <button class="btn-secondary btn-sm" data-action="cancel" data-id="${b.id}">Annulla</button>
+          ` : ''}
+          <button class="btn-secondary btn-sm" data-action="delete" data-id="${b.id}" style="color:var(--no);border-color:#fecaca">Elimina</button>
+        </div>
+      </div>
+    `;
+  }
+}
+
+async function handleAdminBetAction(action, id) {
+  if (action === 'close') {
+    if (!confirm('Chiudere le puntate? Non sarà più possibile puntare.')) return;
+    const { error } = await sb.rpc('close_bet', { p_bet_id: id });
+    if (error) return toast(error.message, 'error');
+    toast('Scommessa chiusa', 'success');
+  }
+  if (action === 'cancel') {
+    if (!confirm('Annullare la scommessa? Tutti saranno rimborsati con +2%.')) return;
+    const { error } = await sb.rpc('cancel_bet', { p_bet_id: id });
+    if (error) return toast(error.message, 'error');
+    toast('Scommessa annullata', 'success');
+  }
+  if (action === 'resolve-yes' || action === 'resolve-no') {
+    const outcome = action === 'resolve-yes' ? 'yes' : 'no';
+    if (!confirm(`Risolvere come ${outcome.toUpperCase()}? Il pool verrà distribuito.`)) return;
+    const { error } = await sb.rpc('resolve_bet', { p_bet_id: id, p_outcome: outcome });
+    if (error) return toast(error.message, 'error');
+    toast('Scommessa risolta', 'success');
+  }
+  if (action === 'delete') {
+    const { data: b } = await sb.from('bets').select('status, title').eq('id', id).maybeSingle();
+    if (!b) return toast('Scommessa non trovata', 'error');
+    let msg = `Eliminare definitivamente "${b.title}"?\n\n`;
+    if (b.status === 'open' || b.status === 'closed') {
+      msg += 'Tutte le puntate verranno RIMBORSATE al 100% e la scommessa eliminata. Operazione irreversibile.';
+    } else {
+      msg += 'La scommessa e tutti i suoi commenti/puntate verranno rimossi. I saldi NON verranno modificati (risoluzione/rimborso già avvenuti). Operazione irreversibile.';
+    }
+    if (!confirm(msg)) return;
+    const { error } = await sb.rpc('admin_delete_bet', { p_bet_id: id });
+    if (error) return toast(error.message, 'error');
+    toast('Scommessa eliminata', 'success');
+  }
+}
+
+async function renderAdminUsers() {
+  const body = document.getElementById('adminBody');
+  if (!body) return;
+  const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: true });
+  if (error) { body.innerHTML = `<div class="error-box">${escapeHTML(error.message)}</div>`; return; }
+
+  body.innerHTML = `
+    <div class="section">
+      <h2>Utenti (${data.length})</h2>
+      ${data.map(userRowAdmin).join('')}
+    </div>
+  `;
+  body.querySelectorAll('[data-edit-bal]').forEach(btn => {
+    btn.onclick = () => openBalanceModal(btn.dataset.id, btn.dataset.username, Number(btn.dataset.balance));
+  });
+  body.querySelectorAll('[data-toggle-admin]').forEach(btn => {
+    btn.onclick = async () => {
+      const value = btn.dataset.value === 'true';
+      if (!confirm(value ? 'Rendere admin questo utente?' : 'Rimuovere i privilegi admin?')) return;
+      const { error } = await sb.rpc('admin_toggle_admin', { p_user_id: btn.dataset.id, p_value: value });
+      if (error) return toast(error.message, 'error');
+      toast('Aggiornato', 'success');
+    };
+  });
+
+  function userRowAdmin(u) {
+    const isMe = state.profile?.id === u.id;
+    return `
+      <div class="admin-row">
+        <div class="grow">
+          <div class="name">
+            <a href="#/u/${encodeURIComponent(u.username)}">${escapeHTML(u.username)}</a>
+            ${u.is_admin ? ' <span style="color:var(--accent);font-size:11px;font-weight:700">ADMIN</span>' : ''}
+          </div>
+          <div class="meta">${fmt(u.balance)}cr · iscritto ${fullDate(u.created_at)}</div>
+        </div>
+        <div class="actions">
+          <button class="btn-secondary btn-sm" data-edit-bal data-id="${u.id}" data-username="${escapeHTML(u.username)}" data-balance="${u.balance}">Crediti</button>
+          ${!isMe ? `<button class="btn-secondary btn-sm" data-toggle-admin data-id="${u.id}" data-value="${!u.is_admin}">
+            ${u.is_admin ? '−admin' : '+admin'}
+          </button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function openBalanceModal(id, username, balance) {
+    openModal({
+      title: `Crediti di ${username}`,
+      bodyHTML: `
+        <form id="balForm">
+          <div class="field">
+            <label>Nuovo saldo</label>
+            <input type="number" name="balance" step="1" min="0" value="${Math.round(balance)}" required>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+            <button type="button" class="chip" data-add="500">+500</button>
+            <button type="button" class="chip" data-add="1000">+1000</button>
+            <button type="button" class="chip" data-add="-500">−500</button>
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%">Salva</button>
+        </form>
+      `,
+      onMount: (root, close) => {
+        const form = root.querySelector('#balForm');
+        root.querySelectorAll('[data-add]').forEach(b => {
+          b.onclick = () => form.balance.value = Math.max(0, Math.round(Number(form.balance.value)) + Number(b.dataset.add));
+        });
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const v = Math.round(Number(form.balance.value));
+          const { error } = await sb.rpc('admin_set_balance', { p_user_id: id, p_balance: v });
+          if (error) return toast(error.message, 'error');
+          toast('Saldo aggiornato', 'success');
+          close();
+        };
+      }
+    });
+  }
+}
+
+async function renderAdminCats() {
+  const body = document.getElementById('adminBody');
+  if (!body) return;
+  const { data, error } = await sb.from('categories').select('*').order('sort_order');
+  if (error) { body.innerHTML = `<div class="error-box">${escapeHTML(error.message)}</div>`; return; }
+
+  const { data: counts } = await sb.from('bets').select('category_id');
+  const countMap = {};
+  (counts || []).forEach(b => { countMap[b.category_id] = (countMap[b.category_id] || 0) + 1; });
+
+  body.innerHTML = `
+    <div class="section">
+      <h2>Categorie (${data.length})</h2>
+      ${data.map(catRow).join('')}
+      <form id="newCatForm" style="margin-top:14px;display:flex;gap:6px">
+        <input type="text" name="name" placeholder="Nuova categoria" required maxlength="40" class="search-input" style="flex:1">
+        <button type="submit" class="btn-primary btn-sm">Aggiungi</button>
+      </form>
+    </div>
+  `;
+
+  body.querySelectorAll('[data-rename-cat]').forEach(btn => {
+    btn.onclick = () => openRenameCatModal(btn.dataset.renameCat, btn.dataset.name);
+  });
+  body.querySelectorAll('[data-del-cat]').forEach(btn => {
+    btn.onclick = async () => {
+      const id = Number(btn.dataset.delCat);
+      const n = countMap[id] || 0;
+      const warn = n > 0
+        ? `Questa categoria è usata da ${n} scommess${n === 1 ? 'a' : 'e'}. Diventeranno "Senza categoria". Continuare?`
+        : 'Eliminare la categoria?';
+      if (!confirm(warn)) return;
+      const { error } = await sb.from('categories').delete().eq('id', id);
+      if (error) return toast(error.message, 'error');
+      toast('Eliminata', 'success');
+    };
+  });
+
+  body.querySelector('#newCatForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const name = e.target.name.value.trim();
+    if (!name) return;
+    const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    const maxOrder = data.reduce((m,c) => Math.max(m, c.sort_order), 0);
+    const { error } = await sb.from('categories').insert({ name, slug, sort_order: maxOrder + 1 });
+    if (error) return toast(error.message, 'error');
+    toast('Creata', 'success');
+    e.target.reset();
+  };
+
+  function catRow(c) {
+    const n = countMap[c.id] || 0;
+    return `
+      <div class="admin-row">
+        <div class="grow">
+          <div class="name">${escapeHTML(c.name)}</div>
+          <div class="meta">slug: ${escapeHTML(c.slug)} · ${n} scommess${n === 1 ? 'a' : 'e'}</div>
+        </div>
+        <div class="actions">
+          <button class="btn-secondary btn-sm" data-rename-cat="${c.id}" data-name="${escapeHTML(c.name)}">Rinomina</button>
+          <button class="btn-secondary btn-sm" data-del-cat="${c.id}" style="color:var(--no);border-color:#fecaca">Elimina</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function openRenameCatModal(id, currentName) {
+    openModal({
+      title: 'Rinomina categoria',
+      bodyHTML: `
+        <form id="renameForm">
+          <div class="field">
+            <label>Nuovo nome</label>
+            <input type="text" name="name" required maxlength="40" value="${escapeHTML(currentName)}">
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">
+            Lo slug verrà rigenerato automaticamente dal nome.
+          </p>
+          <button type="submit" class="btn-primary" style="width:100%">Salva</button>
+        </form>
+      `,
+      onMount: (root, close) => {
+        const form = root.querySelector('#renameForm');
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const name = form.name.value.trim();
+          if (!name) return;
+          const { error } = await sb.rpc('admin_rename_category', { p_id: id, p_name: name });
+          if (error) return toast(error.message, 'error');
+          toast('Categoria rinominata', 'success');
+          close();
+        };
+      }
+    });
+  }
+}
+
+// =========================================================
+// BOOTSTRAP
+// =========================================================
+async function refreshProfile() {
+  const s = await getSession();
+  state.session = s;
+  state.profile = s ? await getProfile(s.user.id) : null;
+}
+
+async function init() {
+  await refreshProfile();
+  route('/', () => renderHome());
+  route('/bet/:id', ({ id }) => renderBet(id));
+  route('/new', () => renderNewBet());
+  route('/u/:username', ({ username }) => renderProfile(username));
+  route('/admin', () => renderAdmin());
+  route('/search', ({ q }) => renderSearch(q));
+  route('/login', () => renderAuth());
+
+  sb.auth.onAuthStateChange(async () => {
+    await refreshProfile();
+    renderNav();
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  });
+
+  setOnNav(() => unsubscribeAll());
+  renderNav();
+  startRouter();
+
+  sb.channel('profile-self')
+    .on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'profiles',
+      filter: state.profile ? `id=eq.${state.profile.id}` : 'id=eq.00000000-0000-0000-0000-000000000000'
+    }, async () => {
+      await refreshProfile();
+    })
+    .subscribe();
+}
+
+init().catch(e => {
+  console.error(e);
+  document.getElementById('app').innerHTML = '<div class="error-box">Errore di avvio: ' + escapeHTML(e.message) + '</div>';
+});
+</script>
 </body>
 </html>
