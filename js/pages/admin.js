@@ -3,7 +3,7 @@ import { state } from '../state.js';
 import { navigate } from '../router.js';
 import { subscribe } from '../realtime.js';
 import { toast, openModal } from '../components.js';
-import { escapeHTML, fmt, pct, fullDate, deadlineLabel, statusLabel } from '../utils.js';
+import { escapeHTML, fmt, pct, fullDate, statusInfo } from '../utils.js';
 
 let tab = 'bets';
 
@@ -53,43 +53,25 @@ async function renderBetsTab() {
   `;
 
   body.querySelectorAll('[data-action]').forEach(btn => {
-    btn.onclick = async () => {
-      const id = btn.dataset.id;
-      const action = btn.dataset.action;
-      if (action === 'resolve-yes' || action === 'resolve-no') {
-        const outcome = action === 'resolve-yes' ? 'yes' : 'no';
-        if (!confirm(`Risolvere come ${outcome.toUpperCase()}?`)) return;
-        const { error } = await sb.rpc('resolve_bet', { p_bet_id: id, p_outcome: outcome });
-        if (error) return toast(error.message, 'error');
-        toast('Risolta', 'success');
-      }
-      if (action === 'close') {
-        if (!confirm('Chiudere le puntate?')) return;
-        const { error } = await sb.rpc('close_bet', { p_bet_id: id });
-        if (error) return toast(error.message, 'error');
-        toast('Chiusa', 'success');
-      }
-      if (action === 'cancel') {
-        if (!confirm('Annullare? Rimborso +2%.')) return;
-        const { error } = await sb.rpc('cancel_bet', { p_bet_id: id });
-        if (error) return toast(error.message, 'error');
-        toast('Annullata', 'success');
-      }
-    };
+    btn.onclick = () => handleAction(btn.dataset.action, Number(btn.dataset.id));
   });
 
   function rowHTML(b) {
     const closed = new Date(b.deadline) < new Date();
     const yes = Number(b.yes_pool)||0, no = Number(b.no_pool)||0;
     const yPct = pct(yes, no);
+    const st = statusInfo(b, closed);
     const canAct = b.status === 'open' || b.status === 'closed';
     return `
-      <div class="admin-row" style="flex-wrap:wrap">
+      <div class="admin-row" data-status="${st.key}" style="flex-wrap:wrap">
         <div class="grow">
-          <div class="name"><a href="#/bet/${b.id}">${escapeHTML(b.title)}</a></div>
+          <div class="name">
+            <a href="#/bet/${b.id}">${escapeHTML(b.title)}</a>
+          </div>
           <div class="meta">
             ${escapeHTML(b.category?.name || '—')} · SI ${yPct}% / NO ${100-yPct}%
-            · ${fmt(yes+no)}cr · ${statusLabel(b, closed)}
+            · ${fmt(yes+no)}cr
+            · <span class="bet-status status-${st.key}" style="font-size:10px;padding:2px 6px">${st.label}</span>
           </div>
         </div>
         <div class="actions">
@@ -99,9 +81,47 @@ async function renderBetsTab() {
             <button class="btn-no btn-sm" data-action="resolve-no" data-id="${b.id}">NO</button>
             <button class="btn-secondary btn-sm" data-action="cancel" data-id="${b.id}">Annulla</button>
           ` : ''}
+          <button class="btn-secondary btn-sm" data-action="delete" data-id="${b.id}" style="color:var(--no);border-color:#fecaca">Elimina</button>
         </div>
       </div>
     `;
+  }
+}
+
+async function handleAction(action, id) {
+  if (action === 'close') {
+    if (!confirm('Chiudere le puntate? Non sarà più possibile puntare.')) return;
+    const { error } = await sb.rpc('close_bet', { p_bet_id: id });
+    if (error) return toast(error.message, 'error');
+    toast('Scommessa chiusa', 'success');
+  }
+  if (action === 'cancel') {
+    if (!confirm('Annullare la scommessa? Tutti saranno rimborsati con +2%.')) return;
+    const { error } = await sb.rpc('cancel_bet', { p_bet_id: id });
+    if (error) return toast(error.message, 'error');
+    toast('Scommessa annullata', 'success');
+  }
+  if (action === 'resolve-yes' || action === 'resolve-no') {
+    const outcome = action === 'resolve-yes' ? 'yes' : 'no';
+    if (!confirm(`Risolvere come ${outcome.toUpperCase()}? Il pool verrà distribuito.`)) return;
+    const { error } = await sb.rpc('resolve_bet', { p_bet_id: id, p_outcome: outcome });
+    if (error) return toast(error.message, 'error');
+    toast('Scommessa risolta', 'success');
+  }
+  if (action === 'delete') {
+    // Recupera stato per il messaggio di conferma
+    const { data: b } = await sb.from('bets').select('status, title').eq('id', id).maybeSingle();
+    if (!b) return toast('Scommessa non trovata', 'error');
+    let msg = `Eliminare definitivamente "${b.title}"?\n\n`;
+    if (b.status === 'open' || b.status === 'closed') {
+      msg += 'Tutte le puntate verranno RIMBORSATE al 100% e la scommessa eliminata. Operazione irreversibile.';
+    } else {
+      msg += 'La scommessa e tutti i suoi commenti/puntate verranno rimossi. I saldi NON verranno modificati (risoluzione/rimborso già avvenuti). Operazione irreversibile.';
+    }
+    if (!confirm(msg)) return;
+    const { error } = await sb.rpc('admin_delete_bet', { p_bet_id: id });
+    if (error) return toast(error.message, 'error');
+    toast('Scommessa eliminata', 'success');
   }
 }
 
@@ -195,6 +215,11 @@ async function renderCatsTab() {
   const { data, error } = await sb.from('categories').select('*').order('sort_order');
   if (error) { body.innerHTML = `<div class="error-box">${escapeHTML(error.message)}</div>`; return; }
 
+  // Conta scommesse per categoria (per il confirm di eliminazione)
+  const { data: counts } = await sb.from('bets').select('category_id');
+  const countMap = {};
+  (counts || []).forEach(b => { countMap[b.category_id] = (countMap[b.category_id] || 0) + 1; });
+
   body.innerHTML = `
     <div class="section">
       <h2>Categorie (${data.length})</h2>
@@ -206,10 +231,18 @@ async function renderCatsTab() {
     </div>
   `;
 
+  body.querySelectorAll('[data-rename-cat]').forEach(btn => {
+    btn.onclick = () => openRenameModal(btn.dataset.renameCat, btn.dataset.name);
+  });
   body.querySelectorAll('[data-del-cat]').forEach(btn => {
     btn.onclick = async () => {
-      if (!confirm('Eliminare la categoria? Le scommesse diventeranno senza categoria.')) return;
-      const { error } = await sb.from('categories').delete().eq('id', btn.dataset.delCat);
+      const id = Number(btn.dataset.delCat);
+      const n = countMap[id] || 0;
+      const warn = n > 0
+        ? `Questa categoria è usata da ${n} scommess${n === 1 ? 'a' : 'e'}. Diventeranno "Senza categoria". Continuare?`
+        : 'Eliminare la categoria?';
+      if (!confirm(warn)) return;
+      const { error } = await sb.from('categories').delete().eq('id', id);
       if (error) return toast(error.message, 'error');
       toast('Eliminata', 'success');
     };
@@ -228,16 +261,48 @@ async function renderCatsTab() {
   };
 
   function rowHTML(c) {
+    const n = countMap[c.id] || 0;
     return `
       <div class="admin-row">
         <div class="grow">
           <div class="name">${escapeHTML(c.name)}</div>
-          <div class="meta">slug: ${escapeHTML(c.slug)}</div>
+          <div class="meta">slug: ${escapeHTML(c.slug)} · ${n} scommess${n === 1 ? 'a' : 'e'}</div>
         </div>
         <div class="actions">
-          <button class="btn-secondary btn-sm" data-del-cat="${c.id}">Elimina</button>
+          <button class="btn-secondary btn-sm" data-rename-cat="${c.id}" data-name="${escapeHTML(c.name)}">Rinomina</button>
+          <button class="btn-secondary btn-sm" data-del-cat="${c.id}" style="color:var(--no);border-color:#fecaca">Elimina</button>
         </div>
       </div>
     `;
+  }
+
+  function openRenameModal(id, currentName) {
+    openModal({
+      title: 'Rinomina categoria',
+      bodyHTML: `
+        <form id="renameForm">
+          <div class="field">
+            <label>Nuovo nome</label>
+            <input type="text" name="name" required maxlength="40" value="${escapeHTML(currentName)}">
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">
+            Lo slug verrà rigenerato automaticamente dal nome.
+          </p>
+          <button type="submit" class="btn-primary" style="width:100%">Salva</button>
+        </form>
+      `,
+      onMount: (root, close) => {
+        const form = root.querySelector('#renameForm');
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const name = form.name.value.trim();
+          if (!name) return;
+          const { error } = await sb.rpc('admin_rename_category', { p_id: id, p_name: name });
+          if (error) return toast(error.message, 'error');
+          toast('Categoria rinominata', 'success');
+          close();
+        };
+      }
+    });
   }
 }
