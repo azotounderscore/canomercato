@@ -84,7 +84,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   position: fixed; bottom: 0; left: 0; right: 0;
   background: #fff; border-top: 1px solid var(--border);
   display: flex; z-index: 50;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: 50px;
 }
 #bottomnav a {
   flex: 1; text-align: center; padding: 8px 4px 10px;
