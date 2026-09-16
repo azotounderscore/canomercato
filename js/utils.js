@@ -53,12 +53,20 @@ export function timeAgo(d) {
 }
 
 export function statusLabel(bet, closed) {
-  if (bet.status === 'resolved') return bet.outcome === 'yes' ? 'RISOLTA · SI' : 'RISOLTA · NO';
-  if (bet.status === 'cancelled') return 'ANNULLATA';
-  if (bet.status === 'closed') return 'CHIUSA';
-  if (closed) return 'SCADUTA';
-  return 'APERTA';
+  if (bet.status === 'resolved') {
+    return bet.outcome === 'yes'
+      ? { key: 'resolved-yes', label: 'RISOLTA · SI' }
+      : { key: 'resolved-no',  label: 'RISOLTA · NO' };
+  }
+  if (bet.status === 'cancelled') return { key: 'cancelled', label: 'ANNULLATA' };
+  if (bet.status === 'closed')    return { key: 'closed',    label: 'CHIUSA' };
+  if (closed)                     return { key: 'expired',   label: 'SCADUTA' };
+  return                                 { key: 'open',      label: 'APERTA' };
 }
+export function statusInfo(bet, closed) {
+  return statusInfo(bet, closed).label;
+}
+
 
 export function toLocalInputValue(date) {
   const d = new Date(date);
