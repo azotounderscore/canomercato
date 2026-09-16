@@ -2,7 +2,7 @@ import { sb } from '../supabase.js';
 import { state } from '../state.js';
 import { navigate } from '../router.js';
 import { subscribe } from '../realtime.js';
-import { escapeHTML, fmt, pct, deadlineLabel, statusLabel } from '../utils.js';
+import { escapeHTML, fmt, pct, deadlineLabel, statusInfo } from '../utils.js';
 
 let currentCat = 'all';
 
