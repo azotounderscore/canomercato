@@ -60,18 +60,20 @@ async function loadBets() {
   });
 }
 
+import { escapeHTML, fmt, pct, deadlineLabel, statusInfo } from '../utils.js';
+
 function betCard(b) {
   const yes = Number(b.yes_pool) || 0;
   const no = Number(b.no_pool) || 0;
   const yPct = pct(yes, no);
   const nPct = 100 - yPct;
   const closed = new Date(b.deadline) < new Date();
-  const statusCls = b.status === 'open' && closed ? 'status-expired' : 'status-' + b.status;
+  const st = statusInfo(b, closed);
   return `
-    <div class="bet-card" data-id="${b.id}">
+    <div class="bet-card" data-id="${b.id}" data-status="${st.key}">
       <div class="bet-card-head">
         <span class="bet-cat">${escapeHTML(b.category?.name || 'Senza categoria')}</span>
-        <span class="bet-status ${statusCls}">${statusLabel(b, closed)}</span>
+        <span class="bet-status status-${st.key}">${st.label}</span>
       </div>
       <h3 class="bet-title">${escapeHTML(b.title)}</h3>
       <div class="pool-bar">
