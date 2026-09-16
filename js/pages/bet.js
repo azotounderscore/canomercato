@@ -3,7 +3,7 @@ import { state } from '../state.js';
 import { navigate } from '../router.js';
 import { subscribe } from '../realtime.js';
 import { toast, openModal, priceChartSVG } from '../components.js';
-import { escapeHTML, fmt, pct, deadlineLabel, fullDate, timeAgo, statusLabel } from '../utils.js';
+import { escapeHTML, fmt, pct, deadlineLabel, fullDate, timeAgo, statusInfo } from '../utils.js';
 
 export async function renderBet(id) {
   const app = document.getElementById('app');
@@ -47,13 +47,13 @@ export async function renderBet(id) {
     const myNo  = positions.filter(p => p.user_id === me?.id && p.side === 'no').reduce((s,p)=>s+Number(p.stake),0);
     const iBetYes = myYes > 0;
     const iBetNo  = myNo > 0;
-    const statusCls = bet.status === 'open' && closed ? 'status-expired' : 'status-' + bet.status;
+    const st = statusInfo(bet, closed);
 
     app.innerHTML = `
       <div class="bet-detail">
         <div class="bet-card-head">
           <span class="bet-cat">${escapeHTML(bet.category?.name || 'Senza categoria')}</span>
-          <span class="bet-status ${statusCls}">${statusLabel(bet, closed)}</span>
+          <span class="bet-status status-${st.key}">${st.label}</span>
         </div>
         <h1>${escapeHTML(bet.title)}</h1>
         ${bet.description ? `<div class="bet-desc">${escapeHTML(bet.description)}</div>` : ''}
