@@ -10,7 +10,7 @@ export function renderNav() {
   const p = state.profile;
 
   top.innerHTML = `
-    <a href="#/" class="brand">BetFriends</a>
+    <a href="#/" class="brand">NomentanoMarket</a>
     <input id="topSearch" class="search-input" type="search" placeholder="Cerca…" value="">
     <div class="top-right">
       ${p
