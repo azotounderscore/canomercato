@@ -53,7 +53,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   flex-shrink: 0;
 }
 .top-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
-.search-input {
+.search-input { width:100%;
   flex: 1; min-width: 0;
   padding: 8px 12px; border: 1px solid var(--border);
   border-radius: 10px; background: var(--bg); outline: none;
@@ -81,7 +81,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 #app {
   max-width: 720px;
   margin: 0 auto;
-  padding: 16px 12px 100px;
+  padding: 16px 12px 120px;
 }
 
 #bottomnav {
@@ -100,7 +100,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 
 @media (min-width: 768px) {
   #bottomnav { display: none; }
-  #app { padding-bottom: 32px; }
+  #app { padding-bottom: 42px; }
 }
 
 .page-header {
