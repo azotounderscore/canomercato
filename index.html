@@ -53,7 +53,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   flex-shrink: 0;
 }
 .top-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
-.search-input { width:100%;
+.search-input {
   flex: 1; min-width: 0;
   padding: 8px 12px; border: 1px solid var(--border);
   border-radius: 10px; background: var(--bg); outline: none;
@@ -81,17 +81,17 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 #app {
   max-width: 720px;
   margin: 0 auto;
-  padding: 16px 12px 120px;
+  padding: 16px 12px 100px;
 }
 
 #bottomnav {
   position: fixed; bottom: 0; left: 0; right: 0;
   background: #fff; border-top: 1px solid var(--border);
   display: flex; z-index: 50;
-  padding-bottom: 50px;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 #bottomnav a {
-  flex: 1; text-align: center; padding: 8px 4px 10px;
+  flex: 1; text-align: center; padding: 8px 2px 10px;
   color: var(--text-dim); font-size: 10px; font-weight: 500;
   display: flex; flex-direction: column; gap: 2px; align-items: center;
 }
@@ -100,7 +100,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 
 @media (min-width: 768px) {
   #bottomnav { display: none; }
-  #app { padding-bottom: 42px; }
+  #app { padding-bottom: 32px; }
 }
 
 .page-header {
@@ -157,7 +157,6 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   text-transform: uppercase; letter-spacing: 0.3px;
 }
 
-/* Stati scommessa (versione precedente) */
 .bet-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
 .status-open { background: var(--yes-bg); color: var(--yes); }
 .status-closed, .status-resolved, .status-cancelled { background: #f1f5f9; color: var(--text-muted); }
@@ -352,7 +351,8 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 .stat .l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
 .stat.win .v { color: var(--yes); }
 .stat.lose .v { color: var(--no); }
-  /* Leaderboard */
+
+/* Leaderboard */
 .sort-chips { display: flex; gap: 6px; overflow-x: auto; margin: 0 -12px 14px; padding: 0 12px 4px; scrollbar-width: none; }
 .sort-chips::-webkit-scrollbar { display: none; }
 .lb-row {
@@ -399,15 +399,13 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 
 <script type="module">
 // =========================================================
-// CONFIG — METTI QUI I TUOI VALORI SUPABASE
+// CONFIG
 // =========================================================
-const SUPABASE_URL = 'https://jhsyryhksfdfaxmykgvx.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoc3lyeWhrc2ZkZmF4bXlrZ3Z4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODE5ODUsImV4cCI6MjEwNTE1Nzk4NX0.mPXBL-y5HVlD0IzT5NPO-jxN9n-evg7ZbmFx-bofRHo';
+const SUPABASE_URL = 'https://XXXXXXXX.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOi...';
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-// Client — la variabile si chiama `sb` per NON entrare in conflitto
-// con la proprietà globale `window.supabase` esposta dalla SDK.
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession: true,
@@ -450,11 +448,11 @@ function deadlineLabel(deadline) {
   const diffMs = d - now;
   const diffMin = Math.floor(diffMs / 60000);
   if (diffMs < 0) return 'Chiusa';
-  if (diffMin < 60) return `Tra ${diffMin}m`;
+  if (diffMin < 60) return 'Tra ' + diffMin + 'm';
   const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `Tra ${diffH}h`;
+  if (diffH < 24) return 'Tra ' + diffH + 'h';
   const diffD = Math.floor(diffH / 24);
-  if (diffD < 7) return `Tra ${diffD}g`;
+  if (diffD < 7) return 'Tra ' + diffD + 'g';
   return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
 }
 function fullDate(d) {
@@ -482,7 +480,7 @@ function statusLabel(bet, closed) {
 function toLocalInputValue(date) {
   const d = new Date(date);
   const pad = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
 
 // =========================================================
@@ -529,8 +527,9 @@ function startRouter() {
 }
 function parseHash() {
   const raw = location.hash.replace(/^#/, '') || '/';
-  const [path, query] = raw.split('?');
-  const params = Object.fromEntries(new URLSearchParams(query || ''));
+  const parts = raw.split('?');
+  const path = parts[0];
+  const params = Object.fromEntries(new URLSearchParams(parts[1] || ''));
   return { path, query: params };
 }
 function match(pattern, path) {
@@ -545,7 +544,9 @@ function match(pattern, path) {
   return params;
 }
 async function resolveRoute() {
-  const { path, query } = parseHash();
+  const parsed = parseHash();
+  const path = parsed.path;
+  const query = parsed.query;
   const app = document.getElementById('app');
   if (onNav) onNav();
   for (const r of routes) {
@@ -601,10 +602,10 @@ function renderNav() {
     <input id="topSearch" class="search-input" type="search" placeholder="Cerca…" value="">
     <div class="top-right">
       ${p
-        ? `<a href="#/u/${encodeURIComponent(p.username)}" class="avatar" title="${escapeHTML(p.username)}">${escapeHTML(p.username[0].toUpperCase())}</a>
-           ${p.is_admin ? `<a href="#/admin" class="icon-btn" title="Admin">⚙</a>` : ''}
-           <button id="btnLogout" class="icon-btn" title="Esci">⎋</button>`
-        : `<a href="#/login" class="btn-login">Accedi</a>`}
+        ? '<a href="#/u/' + encodeURIComponent(p.username) + '" class="avatar" title="' + escapeHTML(p.username) + '">' + escapeHTML(p.username[0].toUpperCase()) + '</a>' +
+          (p.is_admin ? '<a href="#/admin" class="icon-btn" title="Admin">⚙</a>' : '') +
+          '<button id="btnLogout" class="icon-btn" title="Esci">⎋</button>'
+        : '<a href="#/login" class="btn-login">Accedi</a>'}
     </div>
   `;
 
@@ -622,7 +623,7 @@ function renderNav() {
     navigate('/');
   });
 
-    bottom.innerHTML = `
+  bottom.innerHTML = `
     <a href="#/" data-route="/">${iconHome()}<span>Home</span></a>
     <a href="#/leaderboard" data-route="/leaderboard">${iconTrophy()}<span>Classifica</span></a>
     <a href="#/new" data-route="/new">${iconPlus()}<span>Nuova</span></a>
@@ -636,7 +637,12 @@ function highlightBottom() {
   const path = currentPath();
   document.querySelectorAll('#bottomnav a').forEach(a => {
     const r = a.dataset.route;
-    const active = r === '/' ? path === '/' : path.startsWith(r);
+    let active = false;
+    if (r === '/') active = path === '/';
+    else if (r === '/leaderboard') active = path.startsWith('/leaderboard');
+    else if (r === '/new') active = path.startsWith('/new');
+    else if (r === '/search') active = path.startsWith('/search');
+    else if (r === '/u') active = path.startsWith('/u/');
     a.classList.toggle('active', active);
   });
 }
@@ -652,7 +658,10 @@ function toast(msg, type = 'info') {
     setTimeout(() => el.remove(), 200);
   }, 2800);
 }
-function openModal({ title, bodyHTML, onMount }) {
+function openModal(opts) {
+  const title = opts.title;
+  const bodyHTML = opts.bodyHTML;
+  const onMount = opts.onMount;
   const root = document.getElementById('modal-root');
   root.innerHTML = `
     <div class="modal-backdrop">
@@ -666,8 +675,8 @@ function openModal({ title, bodyHTML, onMount }) {
     </div>
   `;
   const backdrop = root.querySelector('.modal-backdrop');
-  const close = () => { root.innerHTML = ''; document.removeEventListener('keydown', onKey); };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const close = () => { root.innerHTML = ''; document.removeEventListener('keydown', onKey); };
   document.addEventListener('keydown', onKey);
   root.querySelector('.modal-close').onclick = close;
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
@@ -840,7 +849,7 @@ async function loadHomeBets() {
   if (currentCat !== 'all') q = q.eq('category_id', currentCat);
   const { data, error } = await q;
   if (error) { list.innerHTML = `<div class="error-box">${escapeHTML(error.message)}</div>`; return; }
-  if (!data?.length) { list.innerHTML = '<div class="empty">Nessuna scommessa. Creane una!</div>'; return; }
+  if (!data || !data.length) { list.innerHTML = '<div class="empty">Nessuna scommessa. Creane una!</div>'; return; }
   list.innerHTML = data.map(betCardHTML).join('');
   list.querySelectorAll('.bet-card').forEach(el => {
     el.onclick = () => navigate('/bet/' + el.dataset.id);
@@ -998,7 +1007,7 @@ async function renderBet(id) {
       if (error) { toast(error.message, 'error'); return; }
       e.target.body.value = '';
     };
-    const ta = cf?.querySelector('textarea');
+    const ta = cf ? cf.querySelector('textarea') : null;
     if (ta) ta.addEventListener('input', () => {
       ta.style.height = 'auto';
       ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
@@ -1014,7 +1023,7 @@ async function renderBet(id) {
     const otherLabel = side === 'yes' ? 'NO' : 'SI';
     const bal = Number(state.profile.balance) || 0;
     openModal({
-      title: `Punta su ${sideLabel}`,
+      title: 'Punta su ' + sideLabel,
       bodyHTML: `
         <form id="betForm">
           <div class="field">
@@ -1078,7 +1087,7 @@ async function renderBet(id) {
     }
     if (action === 'resolve-yes' || action === 'resolve-no') {
       const outcome = action === 'resolve-yes' ? 'yes' : 'no';
-      if (!confirm(`Risolvere come ${outcome.toUpperCase()}? Il pool verrà distribuito.`)) return;
+      if (!confirm('Risolvere come ' + outcome.toUpperCase() + '? Il pool verrà distribuito.')) return;
       const { error } = await sb.rpc('resolve_bet', { p_bet_id: bet.id, p_outcome: outcome });
       if (error) return toast(error.message, 'error');
       toast('Scommessa risolta', 'success');
@@ -1111,7 +1120,7 @@ async function renderBet(id) {
       <div class="section" style="border-color:#c7d2fe;background:#eef2ff">
         <h2>Pannello admin</h2>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${b.status === 'open' ? `<button class="btn-secondary btn-sm" data-admin="close">Chiudi puntate</button>` : ''}
+          ${b.status === 'open' ? '<button class="btn-secondary btn-sm" data-admin="close">Chiudi puntate</button>' : ''}
           ${showResolve ? `
             <button class="btn-yes btn-sm" data-admin="resolve-yes">Risolvi SI</button>
             <button class="btn-no btn-sm" data-admin="resolve-no">Risolvi NO</button>
@@ -1132,9 +1141,10 @@ async function renderBet(id) {
 async function renderNewBet() {
   if (!state.profile) { navigate('/login'); return; }
   const app = document.getElementById('app');
-  const cats = state.categories.length
-    ? state.categories
-    : (await sb.from('categories').select('*').order('sort_order')).data || [];
+  const catsRes = state.categories.length
+    ? { data: state.categories }
+    : await sb.from('categories').select('*').order('sort_order');
+  const cats = catsRes.data || [];
   state.categories = cats;
 
   if (!cats.length) {
@@ -1185,7 +1195,9 @@ async function renderNewBet() {
     submit.disabled = true;
     const { data, error } = await sb.from('bets').insert({
       creator_id: state.profile.id,
-      title, description, category_id,
+      title: title,
+      description: description,
+      category_id: category_id,
       deadline: deadline.toISOString()
     }).select('id').single();
     submit.disabled = false;
@@ -1196,10 +1208,104 @@ async function renderNewBet() {
 }
 
 // =========================================================
+// PAGE: LEADERBOARD
+// =========================================================
+const SORT_OPTIONS = [
+  { key: 'credits_won', label: 'Crediti vinti', format: 'credits-signed' },
+  { key: 'net_profit',  label: 'Profitto netto', format: 'credits-signed' },
+  { key: 'balance',     label: 'Saldo',          format: 'credits' },
+  { key: 'win_rate',    label: 'Win rate',       format: 'percent' },
+  { key: 'total_bets',  label: 'Puntate',        format: 'number' }
+];
+
+let leaderboardSort = 'credits_won';
+
+async function renderLeaderboard() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="page-header"><h1>Classifica</h1></div>
+    <div class="sort-chips" id="sortChips"></div>
+    <div id="lbBody"><div class="loading">Caricamento…</div></div>
+  `;
+  await loadLeaderboard();
+  subscribe(['positions', 'bets', 'profiles'], () => loadLeaderboard());
+}
+
+async function loadLeaderboard() {
+  const body = document.getElementById('lbBody');
+  if (!body) return;
+
+  const { data, error } = await sb.rpc('get_leaderboard');
+  if (error) { body.innerHTML = `<div class="error-box">${escapeHTML(error.message)}</div>`; return; }
+  if (!data || !data.length) { body.innerHTML = '<div class="empty">Nessun utente</div>'; return; }
+
+  const opt = SORT_OPTIONS.find(o => o.key === leaderboardSort) || SORT_OPTIONS[0];
+  const sorted = [...data].sort((a, b) => {
+    const av = Number(a[opt.key]) || 0;
+    const bv = Number(b[opt.key]) || 0;
+    return bv - av;
+  });
+
+  const chips = document.getElementById('sortChips');
+  chips.innerHTML = SORT_OPTIONS.map(o =>
+    `<button type="button" class="chip ${o.key === leaderboardSort ? 'active' : ''}" data-sort="${o.key}">${o.label}</button>`
+  ).join('');
+  chips.querySelectorAll('[data-sort]').forEach(c => {
+    c.onclick = () => { leaderboardSort = c.dataset.sort; loadLeaderboard(); };
+  });
+
+  const me = state.profile;
+  body.innerHTML = `
+    <div class="section">
+      ${sorted.map((u, i) => lbRow(u, i + 1, opt, me)).join('')}
+    </div>
+  `;
+  body.querySelectorAll('[data-user]').forEach(el => {
+    el.onclick = () => navigate('/u/' + el.dataset.user);
+  });
+}
+
+function lbRow(u, rank, opt, me) {
+  const isMe = me && me.id === u.user_id;
+  const rankCls = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+  const raw = Number(u[opt.key]) || 0;
+
+  let valueStr = '';
+  if (opt.format === 'credits-signed') {
+    valueStr = (raw > 0 ? '+' : '') + fmt(raw) + 'cr';
+  } else if (opt.format === 'credits') {
+    valueStr = fmt(raw) + 'cr';
+  } else if (opt.format === 'percent') {
+    valueStr = raw.toFixed(1) + '%';
+  } else {
+    valueStr = fmt(raw);
+  }
+
+  const valueCls = (opt.key === 'net_profit' || opt.key === 'credits_won')
+    ? (raw > 0 ? 'positive' : raw < 0 ? 'negative' : '')
+    : '';
+
+  return `
+    <div class="lb-row ${isMe ? 'me' : ''}" data-user="${encodeURIComponent(u.username)}">
+      <div class="lb-rank ${rankCls}">${rank}</div>
+      <div class="lb-user">
+        <div class="lb-username">
+          ${escapeHTML(u.username)}
+          ${isMe ? '<span style="color:var(--accent);font-size:10px"> (tu)</span>' : ''}
+        </div>
+        <div class="lb-sub">
+          ${u.wins}V · ${u.losses}P · win ${Number(u.win_rate).toFixed(1)}% · ${u.total_bets} puntate
+        </div>
+      </div>
+      <div class="lb-value ${valueCls}">${valueStr}</div>
+    </div>
+  `;
+}
+
+// =========================================================
 // PAGE: PROFILE
 // =========================================================
-
-  async function renderProfile(username) {
+async function renderProfile(username) {
   const app = document.getElementById('app');
   app.innerHTML = '<div class="loading">Caricamento…</div>';
   let profile, positions = [], createdBets = [];
@@ -1227,7 +1333,6 @@ async function renderNewBet() {
     positions = pos.data || [];
     createdBets = cb.data || [];
 
-    // Calcola la posizione in classifica per crediti vinti
     if (lb.data && lb.data.length) {
       const sorted = [...lb.data].sort((a, b) => (Number(b.credits_won) || 0) - (Number(a.credits_won) || 0));
       const idx = sorted.findIndex(u => u.user_id === profile.id);
@@ -1336,99 +1441,6 @@ async function renderNewBet() {
       </div>
     `;
   }
-
-  function betRow(b) {
-    const closed = new Date(b.deadline) < new Date();
-    return `
-      <div class="pos-item" data-bet="${b.id}" style="cursor:pointer">
-        <span class="side-tag" style="background:var(--accent-bg);color:var(--accent);width:auto;padding:3px 8px">${escapeHTML(b.category?.name || '—')}</span>
-        <div class="username" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-          ${escapeHTML(b.title)}
-        </div>
-        <span class="stake" style="font-weight:500;color:var(--text-muted);font-size:11px">${statusLabel(b, closed)}</span>
-      </div>
-    `;
-  }
-
-  await load();
-  subscribe(['positions', 'bets'], () => load());
-}
-  
-  function renderProfilePage() {
-    const totalWagered = positions.reduce((s,p) => s + Number(p.stake), 0);
-    const resolved = positions.filter(p => p.bet?.status === 'resolved');
-    const won = resolved.filter(p => p.bet.outcome === p.side);
-    const winRate = resolved.length ? Math.round(won.length / resolved.length * 100) : 0;
-    const totalWonStake = won.reduce((s,p) => s + Number(p.stake), 0);
-
-    app.innerHTML = `
-      <div class="profile-head">
-        <div class="avatar-lg">${escapeHTML(profile.username[0].toUpperCase())}</div>
-        <div>
-          <h1 style="margin:0;font-size:20px">${escapeHTML(profile.username)}</h1>
-          <div style="color:var(--text-muted);font-size:12px">
-            Iscritto ${fullDate(profile.created_at)}
-            ${profile.is_admin ? ' · <b style="color:var(--accent)">ADMIN</b>' : ''}
-          </div>
-        </div>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat">
-          <div class="v">${fmt(profile.balance)}</div>
-          <div class="l">Crediti</div>
-        </div>
-        <div class="stat win">
-          <div class="v">${winRate}%</div>
-          <div class="l">Win rate</div>
-        </div>
-        <div class="stat">
-          <div class="v">${positions.length}</div>
-          <div class="l">Puntate</div>
-        </div>
-      </div>
-
-      <div class="section">
-        <h2>Statistiche</h2>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
-          <div>Totale puntato: <b>${fmt(totalWagered)}cr</b></div>
-          <div>Vinte: <b style="color:var(--yes)">${won.length}</b></div>
-          <div>Risolte: <b>${resolved.length}</b></div>
-          <div>Puntato su vincenti: <b>${fmt(totalWonStake)}cr</b></div>
-        </div>
-      </div>
-
-      <div class="section">
-        <h2>Puntate recenti</h2>
-        ${positions.length ? `<div class="pos-list">${positions.slice(0,20).map(posRow).join('')}</div>` : '<div class="empty" style="padding:14px 0">Nessuna puntata</div>'}
-      </div>
-
-      <div class="section">
-        <h2>Scommesse create (${createdBets.length})</h2>
-        ${createdBets.length ? `<div class="pos-list">${createdBets.map(betRow).join('')}</div>` : '<div class="empty" style="padding:14px 0">Nessuna scommessa creata</div>'}
-      </div>
-    `;
-
-    app.querySelectorAll('[data-bet]').forEach(el => {
-      el.onclick = () => location.hash = '/bet/' + el.dataset.bet;
-    });
-  }
-
-  function posRow(p) {
-    const won = p.bet?.status === 'resolved' && p.bet.outcome === p.side;
-    const lost = p.bet?.status === 'resolved' && p.bet.outcome !== p.side;
-    const color = won ? 'var(--yes)' : lost ? 'var(--no)' : 'var(--text-muted)';
-    const label = won ? '✓' : lost ? '✗' : '·';
-    return `
-      <div class="pos-item" data-bet="${p.bet?.id}" style="cursor:pointer">
-        <span class="side-tag ${p.side}">${p.side === 'yes' ? 'SI' : 'NO'}</span>
-        <div class="username" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-          ${escapeHTML(p.bet?.title || '(eliminata)')}
-        </div>
-        <span class="stake" style="color:${color}">${label} ${fmt(p.stake)}cr</span>
-      </div>
-    `;
-  }
   function betRow(b) {
     const closed = new Date(b.deadline) < new Date();
     return `
@@ -1474,14 +1486,14 @@ async function renderSearch(initialQ) {
     results.innerHTML = '<div class="loading">Ricerca…</div>';
 
     const [bets, users, comments] = await Promise.all([
-      sb.from('bets_with_stats').select('*, category:categories(name)').ilike('title', `%${q}%`).limit(20),
-      sb.from('profiles').select('*').ilike('username', `%${q}%`).limit(20),
-      sb.from('comments').select('*, user:profiles(username), bet:bets(id, title)').ilike('body', `%${q}%`).limit(20)
+      sb.from('bets_with_stats').select('*, category:categories(name)').ilike('title', '%' + q + '%').limit(20),
+      sb.from('profiles').select('*').ilike('username', '%' + q + '%').limit(20),
+      sb.from('comments').select('*, user:profiles(username), bet:bets(id, title)').ilike('body', '%' + q + '%').limit(20)
     ]);
 
     const parts = [];
 
-    if (bets.data?.length) {
+    if (bets.data && bets.data.length) {
       parts.push(`
         <div class="section">
           <h2>Scommesse</h2>
@@ -1491,7 +1503,7 @@ async function renderSearch(initialQ) {
         </div>
       `);
     }
-    if (users.data?.length) {
+    if (users.data && users.data.length) {
       parts.push(`
         <div class="section">
           <h2>Utenti</h2>
@@ -1507,7 +1519,7 @@ async function renderSearch(initialQ) {
         </div>
       `);
     }
-    if (comments.data?.length) {
+    if (comments.data && comments.data.length) {
       parts.push(`
         <div class="section">
           <h2>Commenti</h2>
@@ -1562,107 +1574,11 @@ async function renderSearch(initialQ) {
 }
 
 // =========================================================
-// PAGE: LEADERBOARD
-// =========================================================
-const SORT_OPTIONS = [
-  { key: 'credits_won', label: 'Crediti vinti', format: 'credits-signed' },
-  { key: 'net_profit',  label: 'Profitto netto', format: 'credits-signed' },
-  { key: 'balance',     label: 'Saldo',          format: 'credits' },
-  { key: 'win_rate',    label: 'Win rate',       format: 'percent' },
-  { key: 'total_bets',  label: 'Puntate',        format: 'number' }
-];
-
-let leaderboardSort = 'credits_won';
-
-async function renderLeaderboard() {
-  const app = document.getElementById('app');
-  app.innerHTML = `
-    <div class="page-header"><h1>Classifica</h1></div>
-    <div class="sort-chips" id="sortChips"></div>
-    <div id="lbBody"><div class="loading">Caricamento…</div></div>
-  `;
-  await loadLeaderboard();
-  subscribe(['positions', 'bets', 'profiles'], () => loadLeaderboard());
-}
-
-async function loadLeaderboard() {
-  const body = document.getElementById('lbBody');
-  if (!body) return;
-
-  const { data, error } = await sb.rpc('get_leaderboard');
-  if (error) { body.innerHTML = `<div class="error-box">${escapeHTML(error.message)}</div>`; return; }
-  if (!data?.length) { body.innerHTML = '<div class="empty">Nessun utente</div>'; return; }
-
-  const opt = SORT_OPTIONS.find(o => o.key === leaderboardSort);
-  const sorted = [...data].sort((a, b) => {
-    const av = Number(a[opt.key]) || 0;
-    const bv = Number(b[opt.key]) || 0;
-    return bv - av;
-  });
-
-  // Chip di ordinamento
-  const chips = document.getElementById('sortChips');
-  chips.innerHTML = SORT_OPTIONS.map(o =>
-    `<button type="button" class="chip ${o.key === leaderboardSort ? 'active' : ''}" data-sort="${o.key}">${o.label}</button>`
-  ).join('');
-  chips.querySelectorAll('[data-sort]').forEach(c => {
-    c.onclick = () => { leaderboardSort = c.dataset.sort; loadLeaderboard(); };
-  });
-
-  const me = state.profile;
-  body.innerHTML = `
-    <div class="section">
-      ${sorted.map((u, i) => lbRow(u, i + 1, opt, me)).join('')}
-    </div>
-  `;
-  body.querySelectorAll('[data-user]').forEach(el => {
-    el.onclick = () => navigate('/u/' + el.dataset.user);
-  });
-}
-
-function lbRow(u, rank, opt, me) {
-  const isMe = me?.id === u.user_id;
-  const rankCls = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
-  const raw = Number(u[opt.key]) || 0;
-
-  let valueStr = '';
-  if (opt.format === 'credits-signed') {
-    valueStr = (raw > 0 ? '+' : '') + fmt(raw) + 'cr';
-  } else if (opt.format === 'credits') {
-    valueStr = fmt(raw) + 'cr';
-  } else if (opt.format === 'percent') {
-    valueStr = raw.toFixed(1) + '%';
-  } else {
-    valueStr = fmt(raw);
-  }
-
-  const valueCls = (opt.key === 'net_profit' || opt.key === 'credits_won')
-    ? (raw > 0 ? 'positive' : raw < 0 ? 'negative' : '')
-    : '';
-
-  return `
-    <div class="lb-row ${isMe ? 'me' : ''}" data-user="${encodeURIComponent(u.username)}">
-      <div class="lb-rank ${rankCls}">${rank}</div>
-      <div class="lb-user">
-        <div class="lb-username">
-          ${escapeHTML(u.username)}
-          ${isMe ? '<span style="color:var(--accent);font-size:10px"> (tu)</span>' : ''}
-        </div>
-        <div class="lb-sub">
-          ${u.wins}V · ${u.losses}P · win ${Number(u.win_rate).toFixed(1)}% · ${u.total_bets} puntate
-        </div>
-      </div>
-      <div class="lb-value ${valueCls}">${valueStr}</div>
-    </div>
-  `;
-}
-  
-// =========================================================
 // PAGE: ADMIN
 // =========================================================
 let adminTab = 'bets';
 async function renderAdmin() {
-  if (!state.profile?.is_admin) { navigate('/'); return; }
+  if (!state.profile || !state.profile.is_admin) { navigate('/'); return; }
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="page-header"><h1>Admin</h1></div>
@@ -1748,7 +1664,7 @@ async function handleAdminBetAction(action, id) {
   }
   if (action === 'resolve-yes' || action === 'resolve-no') {
     const outcome = action === 'resolve-yes' ? 'yes' : 'no';
-    if (!confirm(`Risolvere come ${outcome.toUpperCase()}? Il pool verrà distribuito.`)) return;
+    if (!confirm('Risolvere come ' + outcome.toUpperCase() + '? Il pool verrà distribuito.')) return;
     const { error } = await sb.rpc('resolve_bet', { p_bet_id: id, p_outcome: outcome });
     if (error) return toast(error.message, 'error');
     toast('Scommessa risolta', 'success');
@@ -1781,7 +1697,7 @@ async function renderAdminUsers() {
   });
 
   function userRowAdmin(u) {
-    const isMe = state.profile?.id === u.id;
+    const isMe = state.profile && state.profile.id === u.id;
     return `
       <div class="admin-row">
         <div class="grow">
@@ -1803,7 +1719,7 @@ async function renderAdminUsers() {
 
   function openBalanceModal(id, username, balance) {
     openModal({
-      title: `Crediti di ${username}`,
+      title: 'Crediti di ' + username,
       bodyHTML: `
         <form id="balForm">
           <div class="field">
@@ -1868,7 +1784,7 @@ async function renderAdminCats() {
     if (!name) return;
     const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
     const maxOrder = data.reduce((m,c) => Math.max(m, c.sort_order), 0);
-    const { error } = await sb.from('categories').insert({ name, slug, sort_order: maxOrder + 1 });
+    const { error } = await sb.from('categories').insert({ name: name, slug: slug, sort_order: maxOrder + 1 });
     if (error) return toast(error.message, 'error');
     toast('Creata', 'success');
     e.target.reset();
@@ -1901,13 +1817,13 @@ async function refreshProfile() {
 async function init() {
   await refreshProfile();
   route('/', () => renderHome());
-  route('/bet/:id', ({ id }) => renderBet(id));
+  route('/bet/:id', (params) => renderBet(params.id));
   route('/new', () => renderNewBet());
-  route('/u/:username', ({ username }) => renderProfile(username));
-  route('/admin', () => renderAdmin());
-  route('/search', ({ q }) => renderSearch(q));
-  route('/login', () => renderAuth());
   route('/leaderboard', () => renderLeaderboard());
+  route('/u/:username', (params) => renderProfile(params.username));
+  route('/admin', () => renderAdmin());
+  route('/search', (params) => renderSearch(params.q));
+  route('/login', () => renderAuth());
 
   sb.auth.onAuthStateChange(async () => {
     await refreshProfile();
@@ -1922,7 +1838,7 @@ async function init() {
   sb.channel('profile-self')
     .on('postgres_changes', {
       event: 'UPDATE', schema: 'public', table: 'profiles',
-      filter: state.profile ? `id=eq.${state.profile.id}` : 'id=eq.00000000-0000-0000-0000-000000000000'
+      filter: state.profile ? 'id=eq.' + state.profile.id : 'id=eq.00000000-0000-0000-0000-000000000000'
     }, async () => {
       await refreshProfile();
     })
