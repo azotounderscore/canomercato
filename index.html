@@ -352,6 +352,42 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 .stat .l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
 .stat.win .v { color: var(--yes); }
 .stat.lose .v { color: var(--no); }
+  /* Leaderboard */
+.sort-chips { display: flex; gap: 6px; overflow-x: auto; margin: 0 -12px 14px; padding: 0 12px 4px; scrollbar-width: none; }
+.sort-chips::-webkit-scrollbar { display: none; }
+.lb-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--border-2);
+  cursor: pointer;
+}
+.lb-row:last-child { border-bottom: none; }
+.lb-row.me { background: var(--accent-bg); margin: 0 -14px; padding: 10px 14px; border-radius: 8px; }
+.lb-rank {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--border-2); color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; flex-shrink: 0;
+}
+.lb-rank.gold   { background: #fef3c7; color: #b45309; }
+.lb-rank.silver { background: #e5e7eb; color: #4b5563; }
+.lb-rank.bronze { background: #fed7aa; color: #9a3412; }
+.lb-user { flex: 1; min-width: 0; }
+.lb-username { font-weight: 600; font-size: 13px; }
+.lb-sub { font-size: 11px; color: var(--text-muted); }
+.lb-value { font-weight: 700; font-size: 14px; white-space: nowrap; }
+.lb-value.positive { color: var(--yes); }
+.lb-value.negative { color: var(--no); }
+
+.rank-badge {
+  display: inline-block;
+  background: var(--accent-bg); color: var(--accent);
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 700;
+  margin-left: 6px; vertical-align: middle;
+}
+.rank-badge.gold   { background: #fef3c7; color: #b45309; }
+.rank-badge.silver { background: #e5e7eb; color: #4b5563; }
+.rank-badge.bronze { background: #fed7aa; color: #9a3412; }
 </style>
 </head>
 <body>
@@ -586,8 +622,9 @@ function renderNav() {
     navigate('/');
   });
 
-  bottom.innerHTML = `
+    bottom.innerHTML = `
     <a href="#/" data-route="/">${iconHome()}<span>Home</span></a>
+    <a href="#/leaderboard" data-route="/leaderboard">${iconTrophy()}<span>Classifica</span></a>
     <a href="#/new" data-route="/new">${iconPlus()}<span>Nuova</span></a>
     <a href="#/search" data-route="/search">${iconSearch()}<span>Cerca</span></a>
     <a href="${p ? '#/u/' + encodeURIComponent(p.username) : '#/login'}" data-route="/u">${iconUser()}<span>Profilo</span></a>
@@ -648,6 +685,9 @@ function iconSearch() {
 }
 function iconUser() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>`;
+}
+function iconTrophy() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M4 4h2v2a3 3 0 0 1-3-3zM18 4h2a3 3 0 0 1-3 3V4z"/><path d="M9 14h6v3H9zM7 20h10"/></svg>`;
 }
 function priceChartSVG(positions, width = 640, height = 140) {
   const sorted = [...positions].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
@@ -1158,16 +1198,19 @@ async function renderNewBet() {
 // =========================================================
 // PAGE: PROFILE
 // =========================================================
-async function renderProfile(username) {
+
+  async function renderProfile(username) {
   const app = document.getElementById('app');
   app.innerHTML = '<div class="loading">Caricamento…</div>';
   let profile, positions = [], createdBets = [];
+  let profileRank = null;
 
   async function load() {
     const p = await sb.from('profiles').select('*').eq('username', username).maybeSingle();
     if (p.error || !p.data) { app.innerHTML = '<div class="error-box">Utente non trovato.</div>'; return; }
     profile = p.data;
-    const [pos, cb] = await Promise.all([
+
+    const [pos, cb, lb] = await Promise.all([
       sb.from('positions')
         .select('*, bet:bets(id, title, status, outcome, deadline, category_id)')
         .eq('user_id', profile.id)
@@ -1177,13 +1220,140 @@ async function renderProfile(username) {
         .select('id, title, status, deadline, category:categories(name)')
         .eq('creator_id', profile.id)
         .order('created_at', { ascending: false })
-        .limit(50)
+        .limit(50),
+      sb.rpc('get_leaderboard')
     ]);
+
     positions = pos.data || [];
     createdBets = cb.data || [];
+
+    // Calcola la posizione in classifica per crediti vinti
+    if (lb.data && lb.data.length) {
+      const sorted = [...lb.data].sort((a, b) => (Number(b.credits_won) || 0) - (Number(a.credits_won) || 0));
+      const idx = sorted.findIndex(u => u.user_id === profile.id);
+      if (idx >= 0) {
+        profileRank = {
+          rank: idx + 1,
+          total: sorted.length,
+          credits: Number(sorted[idx].credits_won) || 0
+        };
+      }
+    }
+
     renderProfilePage();
   }
 
+  function renderProfilePage() {
+    const totalWagered = positions.reduce((s,p) => s + Number(p.stake), 0);
+    const resolved = positions.filter(p => p.bet?.status === 'resolved');
+    const won = resolved.filter(p => p.bet.outcome === p.side);
+    const winRate = resolved.length ? Math.round(won.length / resolved.length * 100) : 0;
+    const totalWonStake = won.reduce((s,p) => s + Number(p.stake), 0);
+
+    let rankBadge = '';
+    if (profileRank) {
+      const cls = profileRank.rank === 1 ? 'gold' : profileRank.rank === 2 ? 'silver' : profileRank.rank === 3 ? 'bronze' : '';
+      rankBadge = `<span class="rank-badge ${cls}" title="Posizione per crediti vinti">#${profileRank.rank} di ${profileRank.total}</span>`;
+    }
+
+    app.innerHTML = `
+      <div class="profile-head">
+        <div class="avatar-lg">${escapeHTML(profile.username[0].toUpperCase())}</div>
+        <div>
+          <h1 style="margin:0;font-size:20px">
+            ${escapeHTML(profile.username)} ${rankBadge}
+          </h1>
+          <div style="color:var(--text-muted);font-size:12px">
+            Iscritto ${fullDate(profile.created_at)}
+            ${profile.is_admin ? ' · <b style="color:var(--accent)">ADMIN</b>' : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="v">${fmt(profile.balance)}</div>
+          <div class="l">Crediti</div>
+        </div>
+        <div class="stat win">
+          <div class="v">${winRate}%</div>
+          <div class="l">Win rate</div>
+        </div>
+        <div class="stat">
+          <div class="v">${positions.length}</div>
+          <div class="l">Puntate</div>
+        </div>
+      </div>
+
+      ${profileRank ? `
+        <div class="section">
+          <h2>Classifica</h2>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+            <div>Posizione: <b>#${profileRank.rank}</b> su ${profileRank.total}</div>
+            <div>Crediti vinti: <b style="color:var(--yes)">${fmt(profileRank.credits)}cr</b></div>
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="section">
+        <h2>Statistiche</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+          <div>Totale puntato: <b>${fmt(totalWagered)}cr</b></div>
+          <div>Vinte: <b style="color:var(--yes)">${won.length}</b></div>
+          <div>Risolte: <b>${resolved.length}</b></div>
+          <div>Puntato su vincenti: <b>${fmt(totalWonStake)}cr</b></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Puntate recenti</h2>
+        ${positions.length ? `<div class="pos-list">${positions.slice(0,20).map(posRow).join('')}</div>` : '<div class="empty" style="padding:14px 0">Nessuna puntata</div>'}
+      </div>
+
+      <div class="section">
+        <h2>Scommesse create (${createdBets.length})</h2>
+        ${createdBets.length ? `<div class="pos-list">${createdBets.map(betRow).join('')}</div>` : '<div class="empty" style="padding:14px 0">Nessuna scommessa creata</div>'}
+      </div>
+    `;
+
+    app.querySelectorAll('[data-bet]').forEach(el => {
+      el.onclick = () => location.hash = '/bet/' + el.dataset.bet;
+    });
+  }
+
+  function posRow(p) {
+    const won = p.bet?.status === 'resolved' && p.bet.outcome === p.side;
+    const lost = p.bet?.status === 'resolved' && p.bet.outcome !== p.side;
+    const color = won ? 'var(--yes)' : lost ? 'var(--no)' : 'var(--text-muted)';
+    const label = won ? '✓' : lost ? '✗' : '·';
+    return `
+      <div class="pos-item" data-bet="${p.bet?.id}" style="cursor:pointer">
+        <span class="side-tag ${p.side}">${p.side === 'yes' ? 'SI' : 'NO'}</span>
+        <div class="username" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${escapeHTML(p.bet?.title || '(eliminata)')}
+        </div>
+        <span class="stake" style="color:${color}">${label} ${fmt(p.stake)}cr</span>
+      </div>
+    `;
+  }
+
+  function betRow(b) {
+    const closed = new Date(b.deadline) < new Date();
+    return `
+      <div class="pos-item" data-bet="${b.id}" style="cursor:pointer">
+        <span class="side-tag" style="background:var(--accent-bg);color:var(--accent);width:auto;padding:3px 8px">${escapeHTML(b.category?.name || '—')}</span>
+        <div class="username" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${escapeHTML(b.title)}
+        </div>
+        <span class="stake" style="font-weight:500;color:var(--text-muted);font-size:11px">${statusLabel(b, closed)}</span>
+      </div>
+    `;
+  }
+
+  await load();
+  subscribe(['positions', 'bets'], () => load());
+}
+  
   function renderProfilePage() {
     const totalWagered = positions.reduce((s,p) => s + Number(p.stake), 0);
     const resolved = positions.filter(p => p.bet?.status === 'resolved');
@@ -1391,6 +1561,102 @@ async function renderSearch(initialQ) {
   if (initialQ) run(initialQ);
 }
 
+// =========================================================
+// PAGE: LEADERBOARD
+// =========================================================
+const SORT_OPTIONS = [
+  { key: 'credits_won', label: 'Crediti vinti', format: 'credits-signed' },
+  { key: 'net_profit',  label: 'Profitto netto', format: 'credits-signed' },
+  { key: 'balance',     label: 'Saldo',          format: 'credits' },
+  { key: 'win_rate',    label: 'Win rate',       format: 'percent' },
+  { key: 'total_bets',  label: 'Puntate',        format: 'number' }
+];
+
+let leaderboardSort = 'credits_won';
+
+async function renderLeaderboard() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="page-header"><h1>Classifica</h1></div>
+    <div class="sort-chips" id="sortChips"></div>
+    <div id="lbBody"><div class="loading">Caricamento…</div></div>
+  `;
+  await loadLeaderboard();
+  subscribe(['positions', 'bets', 'profiles'], () => loadLeaderboard());
+}
+
+async function loadLeaderboard() {
+  const body = document.getElementById('lbBody');
+  if (!body) return;
+
+  const { data, error } = await sb.rpc('get_leaderboard');
+  if (error) { body.innerHTML = `<div class="error-box">${escapeHTML(error.message)}</div>`; return; }
+  if (!data?.length) { body.innerHTML = '<div class="empty">Nessun utente</div>'; return; }
+
+  const opt = SORT_OPTIONS.find(o => o.key === leaderboardSort);
+  const sorted = [...data].sort((a, b) => {
+    const av = Number(a[opt.key]) || 0;
+    const bv = Number(b[opt.key]) || 0;
+    return bv - av;
+  });
+
+  // Chip di ordinamento
+  const chips = document.getElementById('sortChips');
+  chips.innerHTML = SORT_OPTIONS.map(o =>
+    `<button type="button" class="chip ${o.key === leaderboardSort ? 'active' : ''}" data-sort="${o.key}">${o.label}</button>`
+  ).join('');
+  chips.querySelectorAll('[data-sort]').forEach(c => {
+    c.onclick = () => { leaderboardSort = c.dataset.sort; loadLeaderboard(); };
+  });
+
+  const me = state.profile;
+  body.innerHTML = `
+    <div class="section">
+      ${sorted.map((u, i) => lbRow(u, i + 1, opt, me)).join('')}
+    </div>
+  `;
+  body.querySelectorAll('[data-user]').forEach(el => {
+    el.onclick = () => navigate('/u/' + el.dataset.user);
+  });
+}
+
+function lbRow(u, rank, opt, me) {
+  const isMe = me?.id === u.user_id;
+  const rankCls = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+  const raw = Number(u[opt.key]) || 0;
+
+  let valueStr = '';
+  if (opt.format === 'credits-signed') {
+    valueStr = (raw > 0 ? '+' : '') + fmt(raw) + 'cr';
+  } else if (opt.format === 'credits') {
+    valueStr = fmt(raw) + 'cr';
+  } else if (opt.format === 'percent') {
+    valueStr = raw.toFixed(1) + '%';
+  } else {
+    valueStr = fmt(raw);
+  }
+
+  const valueCls = (opt.key === 'net_profit' || opt.key === 'credits_won')
+    ? (raw > 0 ? 'positive' : raw < 0 ? 'negative' : '')
+    : '';
+
+  return `
+    <div class="lb-row ${isMe ? 'me' : ''}" data-user="${encodeURIComponent(u.username)}">
+      <div class="lb-rank ${rankCls}">${rank}</div>
+      <div class="lb-user">
+        <div class="lb-username">
+          ${escapeHTML(u.username)}
+          ${isMe ? '<span style="color:var(--accent);font-size:10px"> (tu)</span>' : ''}
+        </div>
+        <div class="lb-sub">
+          ${u.wins}V · ${u.losses}P · win ${Number(u.win_rate).toFixed(1)}% · ${u.total_bets} puntate
+        </div>
+      </div>
+      <div class="lb-value ${valueCls}">${valueStr}</div>
+    </div>
+  `;
+}
+  
 // =========================================================
 // PAGE: ADMIN
 // =========================================================
@@ -1641,6 +1907,7 @@ async function init() {
   route('/admin', () => renderAdmin());
   route('/search', ({ q }) => renderSearch(q));
   route('/login', () => renderAuth());
+  route('/leaderboard', () => renderLeaderboard());
 
   sb.auth.onAuthStateChange(async () => {
     await refreshProfile();
